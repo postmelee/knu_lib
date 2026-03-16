@@ -1,5 +1,5 @@
 import { getMyInformation, getReadingRoomSeatsHTML, getReadingRooms, doBeaconAction, reserveSeat, extendSeat, releaseSeat } from '../api/seatApi';
-import { UserState, SeatStatus, ParsedSeat, GetMyInfoResponse, ReadingRoom, BeaconAuthResponse, ActionResponse } from '../api/types/seat';
+import { UserState, SeatStatus, ParsedSeat, GetMyInfoResponse, ReadingRoom, BeaconAuthResponse, ActionResponse, SeatActionResponse } from '../api/types/seat';
 import * as cheerio from 'cheerio';
 import { getStoredSession } from './authService';
 
@@ -115,17 +115,19 @@ export async function requestSeatReservation(seatId: string, beaconId: string = 
 }
 
 /**
- * Extend the current seat — auto-injects credentials and seatId from state.
+ * Extend the current seat — auto-injects credentials.
+ * Returns SeatActionResponse with l_communication_status/message.
  */
-export async function requestSeatExtension(seatId: string, beaconId: string = ''): Promise<ActionResponse> {
+export async function requestSeatExtension(seatId: string, beaconId: string = ''): Promise<SeatActionResponse> {
   const { id, password } = await getCredentials();
   return await extendSeat(seatId, id, password, beaconId);
 }
 
 /**
- * Release/return the current seat — auto-injects credentials and seatId from state.
+ * Release/return the current seat — auto-injects credentials.
+ * Returns SeatActionResponse with l_communication_status/message.
  */
-export async function requestSeatRelease(seatId: string): Promise<ActionResponse> {
+export async function requestSeatRelease(seatId: string): Promise<SeatActionResponse> {
   const { id, password } = await getCredentials();
   return await releaseSeat(seatId, id, password);
 }

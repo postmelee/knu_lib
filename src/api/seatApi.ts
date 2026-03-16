@@ -29,7 +29,8 @@ import type {
   GetMyInfoResponse, 
   ReadingRoom, 
   BeaconAuthResponse, 
-  ActionResponse 
+  ActionResponse,
+  SeatActionResponse 
 } from './types/seat';
 
 // ============================================================================
@@ -104,11 +105,11 @@ export const reserveSeat = async (seatId: string, id: string, pw: string, beacon
 /**
  * 3.4 Extending Seat
  */
-export const extendSeat = async (seatId: string, id: string, pw: string, beaconId: string = ''): Promise<ActionResponse> => {
+export const extendSeat = async (seatId: string, id: string, pw: string, beaconId: string = ''): Promise<SeatActionResponse> => {
   const encId = encodeURIComponent(spongeEncrypt(id));
   const encPw = encodeURIComponent(spongeEncrypt(pw));
   
-  const response = await seatApiClient.get<ActionResponse>(
+  const response = await seatApiClient.get<SeatActionResponse>(
     `/Clicker/ExtendReadingSeat?strId=${seatId}&strUserId=${encId}&strUserPass=${encPw}&strDeviceName=android&strKiosk=false&Wifi=&Scanner=&Beacon=${beaconId}`
   );
   return response.data;
@@ -117,11 +118,11 @@ export const extendSeat = async (seatId: string, id: string, pw: string, beaconI
 /**
  * 3.5 Canceling/Releasing Seat
  */
-export const releaseSeat = async (seatId: string, id: string, pw: string): Promise<ActionResponse> => {
+export const releaseSeat = async (seatId: string, id: string, pw: string): Promise<SeatActionResponse> => {
   const encId = encodeURIComponent(spongeEncrypt(id));
   const encPw = encodeURIComponent(spongeEncrypt(pw));
   
-  const response = await seatApiClient.get<ActionResponse>(
+  const response = await seatApiClient.get<SeatActionResponse>(
     `/Clicker/ReleaseReadingSeat?SeatId=${seatId}&userid=${encId}&userpass=${encPw}&devicename=android`
   );
   return response.data;

@@ -127,8 +127,11 @@ export function useExtendSeat() {
              const cachedState = queryClient.getQueryData<{ raw: any }>(SEAT_KEYS.info());
              const seatId = cachedState?.raw?.l_clicker_user_status_seat_id || '';
              const res = await requestSeatExtension(seatId, transientBeaconId);
-             if (res.clicker_global_book_error_message) {
-                 throw new Error(res.clicker_global_book_error_message);
+             // Server signals failure via l_communication_status !== "0"
+             if (res.l_communication_status !== '0') {
+                 const msg = (res.l_communication_message || '연장에 실패했습니다.')
+                     .replace(/<br\s*\/?>/gi, '\n');
+                 throw new Error(msg);
              }
              return res;
         },
@@ -151,8 +154,11 @@ export function useReleaseSeat() {
              const cachedState = queryClient.getQueryData<{ raw: any }>(SEAT_KEYS.info());
              const seatId = cachedState?.raw?.l_clicker_user_status_seat_id || '';
              const res = await requestSeatRelease(seatId);
-             if (res.clicker_global_book_error_message) {
-                 throw new Error(res.clicker_global_book_error_message);
+             // Server signals failure via l_communication_status !== "0"
+             if (res.l_communication_status !== '0') {
+                 const msg = (res.l_communication_message || '퇴실에 실패했습니다.')
+                     .replace(/<br\s*\/?>/gi, '\n');
+                 throw new Error(msg);
              }
              return res;
         },

@@ -49,6 +49,15 @@ export interface ActionResponse {
   UserInfo?: any[];
 }
 
+/**
+ * Response from ExtendReadingSeat / ReleaseReadingSeat.
+ * These endpoints return a full info blob with l_communication_status/message.
+ */
+export interface SeatActionResponse {
+  l_communication_status: string;
+  l_communication_message: string | null;
+}
+
 export enum UserState {
   UNAUTHORIZED = 0,
   IDLE = 1,
