@@ -46,3 +46,6 @@ __pycache__/
 # Gemini
 .gemini/
 gemini/
+
+# Docs
+_gemini/
