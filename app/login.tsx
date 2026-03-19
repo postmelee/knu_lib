@@ -32,10 +32,11 @@ export default function LoginScreen() {
         onSuccess: () => {
           router.replace('/');
         },
-        onError: (error) => {
+        onError: (error: Error) => {
+          const title = error.name === 'NetworkError' ? '네트워크 오류' : '로그인 실패';
           Alert.alert(
-            '로그인 실패',
-            '학번 또는 비밀번호를 확인해주세요.',
+            title,
+            error.message,
             [{ text: '확인' }],
           );
         },
