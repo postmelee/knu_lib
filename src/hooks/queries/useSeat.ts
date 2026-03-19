@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthSession } from './useAuth';
+import type { GetMyInfoResponse } from '../../api/types/seat';
+import { BeaconError, SeatActionError } from '../../utils/errors';
 import { 
   fetchSeatStatus, 
   fetchReadingRooms, 
@@ -87,7 +89,7 @@ export function useBeaconAuth() {
                 setTransientBeaconId(res.l_communication_beacon_id);
                 return res;
             } else {
-                throw new Error(res.l_communication_message || "Beacon verification failed");
+                throw new BeaconError(res.l_communication_message || "Beacon verification failed");
             }
         }
     });
@@ -101,7 +103,7 @@ export function useReserveSeat() {
 
     return useMutation({
         mutationFn: async (seatId: string) => {
-            const cachedState = queryClient.getQueryData<{ raw: any }>(SEAT_KEYS.info());
+            const cachedState = queryClient.getQueryData<{ raw: GetMyInfoResponse | null }>(SEAT_KEYS.info());
             const needsBeacon = cachedState?.raw?.l_clicker_user_status_seat_beacon_use === true;
 
              // If beacon is required but we don't have a cached beacon ID, run BLE scan + auth
@@ -112,7 +114,7 @@ export function useReserveSeat() {
                      beaconId = authRes.l_communication_beacon_id;
                      setTransientBeaconId(beaconId);
                  } else {
-                     throw new Error(authRes.l_communication_message || '비콘 인증에 실패했습니다.');
+                     throw new BeaconError(authRes.l_communication_message || '비콘 인증에 실패했습니다.');
                  }
              }
 
@@ -120,7 +122,7 @@ export function useReserveSeat() {
             if (res.l_communication_status !== '0') {
                  const msg = (res.l_communication_message || '예약에 실패했습니다.')
                      .replace(/<br\s*\/?>/gi, '\n');
-                 throw new Error(msg);
+                 throw new SeatActionError(msg);
              }
              return res;
         },
@@ -140,7 +142,7 @@ export function useExtendSeat() {
 
     return useMutation({
         mutationFn: async () => {
-             const cachedState = queryClient.getQueryData<{ raw: any }>(SEAT_KEYS.info());
+             const cachedState = queryClient.getQueryData<{ raw: GetMyInfoResponse | null }>(SEAT_KEYS.info());
              const seatId = cachedState?.raw?.l_clicker_user_status_seat_id || '';
              const needsBeacon = cachedState?.raw?.l_clicker_user_status_seat_beacon_use === true;
 
@@ -152,7 +154,7 @@ export function useExtendSeat() {
                      beaconId = authRes.l_communication_beacon_id;
                      setTransientBeaconId(beaconId);
                  } else {
-                     throw new Error(authRes.l_communication_message || '비콘 인증에 실패했습니다.');
+                     throw new BeaconError(authRes.l_communication_message || '비콘 인증에 실패했습니다.');
                  }
              }
 
@@ -160,7 +162,7 @@ export function useExtendSeat() {
              if (res.l_communication_status !== '0') {
                  const msg = (res.l_communication_message || '연장에 실패했습니다.')
                      .replace(/<br\s*\/?>/gi, '\n');
-                 throw new Error(msg);
+                 throw new SeatActionError(msg);
              }
              return res;
         },
@@ -180,14 +182,14 @@ export function useReleaseSeat() {
     return useMutation({
         mutationFn: async () => {
              // Get current seatId from cached query data
-             const cachedState = queryClient.getQueryData<{ raw: any }>(SEAT_KEYS.info());
+             const cachedState = queryClient.getQueryData<{ raw: GetMyInfoResponse | null }>(SEAT_KEYS.info());
              const seatId = cachedState?.raw?.l_clicker_user_status_seat_id || '';
              const res = await requestSeatRelease(seatId);
              // Server signals failure via l_communication_status !== "0"
              if (res.l_communication_status !== '0') {
                  const msg = (res.l_communication_message || '퇴실에 실패했습니다.')
                      .replace(/<br\s*\/?>/gi, '\n');
-                 throw new Error(msg);
+                 throw new SeatActionError(msg);
              }
              return res;
         },

@@ -37,6 +37,10 @@ export interface ReadingRoom {
   l_flag_beacon_validation: number | string; // Expected: 1 for true, 0 for false
 }
 
+export interface GetReadingRoomsResponse {
+  _Model_lg_clicker_reading_room_brief_list: ReadingRoom[];
+}
+
 export interface BeaconAuthResponse {
   l_communication_status: string;
   l_communication_beacon_id: string;

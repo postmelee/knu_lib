@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { spongeEncrypt, getSpongeTimestampString } from '../utils/crypto';
 
-export const BASE_URL = 'https://lib.kangnam.ac.kr';
-const APP_VERSION = '1.0.0'; // Update with actual version if needed
+export const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://lib.kangnam.ac.kr';
+const APP_VERSION = process.env.EXPO_PUBLIC_APP_VERSION || '1.0.0'; // Update with actual version from ENV
 const BASE_UA = 'Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Mobile Safari/537.36';
 
 /**
@@ -28,6 +28,7 @@ seatApiClient.interceptors.request.use((config) => {
 import type { 
   GetMyInfoResponse, 
   ReadingRoom, 
+  GetReadingRoomsResponse,
   BeaconAuthResponse, 
   SeatActionResponse 
 } from './types/seat';
@@ -53,7 +54,7 @@ export const getMyInformation = async (id: string, pw: string): Promise<GetMyInf
  * 3.1 Fetching Rooms
  */
 export const getReadingRooms = async (): Promise<ReadingRoom[]> => {
-  const response = await seatApiClient.get<any>('/Clicker/GetClickerReadingRooms');
+  const response = await seatApiClient.get<GetReadingRoomsResponse>('/Clicker/GetClickerReadingRooms');
   return response.data._Model_lg_clicker_reading_room_brief_list || [];
 };
 
@@ -84,7 +85,7 @@ export const doBeaconAction = async (
   const encId = encodeURIComponent(spongeEncrypt(id));
   const encPw = encodeURIComponent(spongeEncrypt(pw));
   
-  const beaconUid = '24ddf4118cf1440c87cde368daf9c93e';
+  const beaconUid = process.env.EXPO_PUBLIC_BEACON_UID || '24ddf4118cf1440c87cde368daf9c93e';
   
   const response = await seatApiClient.get<BeaconAuthResponse>(
     `/Beacon/DoClickerBeaconAction?Uid=${beaconUid}&UserId=${encId}&UserPass=${encPw}&Name=RECO&Major=${major}&Minor=${minor}&Rssi=${rssi}&Wifi=${encodeURIComponent(ssid)}&WifiMac=${encodeURIComponent(bssid)}`
@@ -102,7 +103,6 @@ export const reserveSeat = async (seatId: string, id: string, pw: string, beacon
   const response = await seatApiClient.get<SeatActionResponse>(
     `/Clicker/ReadingRoomAction?ActionCode=0&SeatId=${seatId}&UserId=${encId}&UserPass=${encPw}&DeviceName=android&Kiosk=false&Guid=${encodeURIComponent(guid)}&Wifi=&Scanner=&Geolocation=0&Beacon=${beaconId}&Eng=False`
   );
-  console.log(response.data)
   return response.data;
 };
 

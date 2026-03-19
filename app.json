@@ -47,7 +47,8 @@
           "isBackgroundEnabled": false,
           "neverForLocation": false
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "extra": {
       "router": {},
