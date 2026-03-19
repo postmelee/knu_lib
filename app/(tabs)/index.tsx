@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, ScrollView, RefreshControl } from 'react-native';
 import { useCallback, useState } from 'react';
 import { Text } from '@/components/Text';
+import { textColors } from '@/styles/typography';
 import { StudentCard } from '@/components/StudentCard';
 import { SeatStatusCard } from '@/components/SeatStatusCard';
 import { LoanSummaryCard } from '@/components/LoanSummaryCard';
@@ -26,7 +27,7 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>강남대학교</Text>
+          <Text preset="t2Bold" color={textColors.primary}>강남대학교</Text>
         </View>
         <View style={styles.cardsContainer}>
           <StudentCard />
@@ -52,13 +53,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     alignItems: 'center',
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-    letterSpacing: -0.5,
-  },
   cardsContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
 });

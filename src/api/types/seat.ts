@@ -43,14 +43,8 @@ export interface BeaconAuthResponse {
   l_communication_message: string;
 }
 
-export interface ActionResponse {
-  g_clicker_login_result: number;
-  clicker_global_book_error_message: string;
-  UserInfo?: any[];
-}
-
 /**
- * Response from ExtendReadingSeat / ReleaseReadingSeat.
+ * Response from ReadingRoomAction / ExtendReadingSeat / ReleaseReadingSeat.
  * These endpoints return a full info blob with l_communication_status/message.
  */
 export interface SeatActionResponse {

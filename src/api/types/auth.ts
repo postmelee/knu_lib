@@ -18,6 +18,7 @@ export interface SmartCardResponse {
   libtechAccountUseridQr: string;
   libtechAccountDepart: string;
   libtechAccountUniv: string;
+  libtechAccountPhoneUid: string;
 }
 
 /**
@@ -29,6 +30,7 @@ export interface SmartCard {
   qrId: string;
   department: string;
   college: string;
+  guid: string;
 }
 
 /**

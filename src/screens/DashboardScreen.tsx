@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Button, Alert } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useSeatState, useReadingRooms } from '../hooks/queries/useSeat';
 import { UserState } from '../api/types/seat';
 import { useAuthSession } from '../hooks/queries/useAuth';
 import { useRouter } from 'expo-router';
 import { ReadingRoomCard } from '../components/ReadingRoomCard';
 import { ActiveSessionCard } from '../components/ActiveSessionCard';
+import { Text } from '../components/Text';
+import { Button } from '../components/Button';
+import { textColors } from '../styles/typography';
 
 export const DashboardScreen: React.FC = () => {
   const router = useRouter();
@@ -29,7 +32,7 @@ export const DashboardScreen: React.FC = () => {
       params: {
         roomId: room.l_id,
         roomName: room.l_room_name,
-        requireBeacon: room.l_flag_beacon_validation === "1" || room.l_flag_beacon_validation === 1 ? 'true' : 'false',
+        requireBeacon: Boolean(room.l_flag_beacon_validation) && room.l_flag_beacon_validation !== "0" && room.l_flag_beacon_validation !== 0 ? 'true' : 'false',
       }
     });
   };
@@ -37,8 +40,8 @@ export const DashboardScreen: React.FC = () => {
   if (!session) {
     return (
       <View style={styles.center}>
-        <Text style={styles.title}>Welcome to KNU Library</Text>
-        <Text style={styles.subtitle}>Please log in via the University SSO to continue</Text>
+        <Text preset="t3Bold" color={textColors.primary} style={styles.titleSpacing}>Welcome to KNU Library</Text>
+        <Text preset="t6Medium" color={textColors.secondary}>Please log in via the University SSO to continue</Text>
       </View>
     );
   }
@@ -46,8 +49,8 @@ export const DashboardScreen: React.FC = () => {
   if (isSeatLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1976d2" />
-        <Text style={styles.loadingText}>Evaluating State...</Text>
+        <ActivityIndicator size="large" color={textColors.blue} />
+        <Text preset="t6Medium" color={textColors.tertiary} style={styles.loadingText}>Evaluating State...</Text>
       </View>
     );
   }
@@ -56,9 +59,9 @@ export const DashboardScreen: React.FC = () => {
   if (state === UserState.UNAUTHORIZED) {
     return (
       <View style={styles.center}>
-        <Text style={styles.title}>Session Expired</Text>
-        <Text style={styles.subtitle}>Could not load library seat information.</Text>
-        <Button title="Retry" onPress={() => refetchSeat()} />
+        <Text preset="t3Bold" color={textColors.primary} style={styles.titleSpacing}>Session Expired</Text>
+        <Text preset="t6Medium" color={textColors.secondary} style={styles.subtitleSpacing}>Could not load library seat information.</Text>
+        <Button variant="fill" color="primary" onPress={() => refetchSeat()}>다시 시도</Button>
       </View>
     );
   }
@@ -66,9 +69,9 @@ export const DashboardScreen: React.FC = () => {
   if (state === UserState.SEATED || state === UserState.AWAY) {
     return (
       <View style={styles.container}>
-        <Text style={styles.headerTitle}>My Reservation</Text>
-        <ActiveSessionCard />
-        <Button title="Refresh Status" onPress={() => refetchSeat()} />
+        <View style={styles.paddedContent}>
+          <ActiveSessionCard />
+        </View>
       </View>
     );
   }
@@ -76,9 +79,10 @@ export const DashboardScreen: React.FC = () => {
   // State === IDLE
   return (
     <View style={styles.container}>
-      <Text style={styles.headerTitle}>Available Reading Rooms</Text>
       {loadingRooms ? (
-         <View style={{ padding: 20 }}><ActivityIndicator /></View>
+         <View style={styles.centerList}>
+             <ActivityIndicator size="large" color={textColors.blue} />
+         </View>
       ) : (
         <FlatList
           data={rooms}
@@ -89,6 +93,7 @@ export const DashboardScreen: React.FC = () => {
           contentContainerStyle={styles.listContainer}
           refreshing={isFetchingRooms}
           onRefresh={refetchRooms}
+          style={{backgroundColor: '#f9fafb',}}
         />
       )}
     </View>
@@ -100,34 +105,36 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f9fafb',
+    padding: 24,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  titleSpacing: {
     marginBottom: 8,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
+  subtitleSpacing: {
     marginBottom: 24,
+    textAlign: 'center',
   },
   loadingText: {
     marginTop: 12,
-    color: '#666',
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#ffffff', // Native header blends nicely with white
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    padding: 20,
-    backgroundColor: '#fff',
-    color: '#333',
+  paddedContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  centerList: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   listContainer: {
-    paddingBottom: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
+    gap: 12,
+    backgroundColor: '#f9fafb',
   }
 });

@@ -13,6 +13,7 @@ function mapSmartCard(response: SmartCardResponse): SmartCard {
     qrId: response.libtechAccountUseridQr,
     department: response.libtechAccountDepart,
     college: response.libtechAccountUniv,
+    guid: response.libtechAccountPhoneUid,
   };
 }
 

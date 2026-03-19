@@ -13,7 +13,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.postmelee.KNU-library",
+      "infoPlist": {
+        "NSBluetoothAlwaysUsageDescription": "도서관 비콘 인증을 위해 블루투스가 필요합니다",
+        "NSLocationWhenInUseUsageDescription": "비콘 탐색을 위해 위치 권한이 필요합니다"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,13 +26,34 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "permissions": [
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN"
+      ],
+      "package": "com.postmelee.KNUlibrary"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router"
-    ]
+      "expo-router",
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": false,
+          "neverForLocation": false
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0e3a8675-e72d-42c9-a468-27f21cc700cc"
+      }
+    }
   }
 }

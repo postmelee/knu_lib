@@ -101,11 +101,28 @@ export function useReserveSeat() {
 
     return useMutation({
         mutationFn: async (seatId: string) => {
+            const cachedState = queryClient.getQueryData<{ raw: any }>(SEAT_KEYS.info());
+            const needsBeacon = cachedState?.raw?.l_clicker_user_status_seat_beacon_use === true;
+
+             // If beacon is required but we don't have a cached beacon ID, run BLE scan + auth
+             let beaconId = transientBeaconId;
+             if (needsBeacon && !beaconId) {
+                 const authRes = await authenticateBeacon();
+                 if (authRes.l_communication_status === "1" && authRes.l_communication_beacon_id) {
+                     beaconId = authRes.l_communication_beacon_id;
+                     setTransientBeaconId(beaconId);
+                 } else {
+                     throw new Error(authRes.l_communication_message || '비콘 인증에 실패했습니다.');
+                 }
+             }
+
             const res = await requestSeatReservation(seatId, transientBeaconId);
-            if (res.clicker_global_book_error_message) {
-                throw new Error(res.clicker_global_book_error_message);
-            }
-            return res;
+            if (res.l_communication_status !== '0') {
+                 const msg = (res.l_communication_message || '예약에 실패했습니다.')
+                     .replace(/<br\s*\/?>/gi, '\n');
+                 throw new Error(msg);
+             }
+             return res;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: SEAT_KEYS.info() });
@@ -123,11 +140,23 @@ export function useExtendSeat() {
 
     return useMutation({
         mutationFn: async () => {
-             // Get current seatId from cached query data
              const cachedState = queryClient.getQueryData<{ raw: any }>(SEAT_KEYS.info());
              const seatId = cachedState?.raw?.l_clicker_user_status_seat_id || '';
-             const res = await requestSeatExtension(seatId, transientBeaconId);
-             // Server signals failure via l_communication_status !== "0"
+             const needsBeacon = cachedState?.raw?.l_clicker_user_status_seat_beacon_use === true;
+
+             // If beacon is required but we don't have a cached beacon ID, run BLE scan + auth
+             let beaconId = transientBeaconId;
+             if (needsBeacon && !beaconId) {
+                 const authRes = await authenticateBeacon();
+                 if (authRes.l_communication_status === "1" && authRes.l_communication_beacon_id) {
+                     beaconId = authRes.l_communication_beacon_id;
+                     setTransientBeaconId(beaconId);
+                 } else {
+                     throw new Error(authRes.l_communication_message || '비콘 인증에 실패했습니다.');
+                 }
+             }
+
+             const res = await requestSeatExtension(seatId, beaconId);
              if (res.l_communication_status !== '0') {
                  const msg = (res.l_communication_message || '연장에 실패했습니다.')
                      .replace(/<br\s*\/?>/gi, '\n');

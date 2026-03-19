@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { ReadingRoom } from '../api/seatApi';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text } from './Text';
+import { textColors } from '../styles/typography';
+import { ReadingRoom } from '../api/types/seat';
 
 interface ReadingRoomCardProps {
   room: ReadingRoom;
@@ -8,29 +10,50 @@ interface ReadingRoomCardProps {
 }
 
 export const ReadingRoomCard: React.FC<ReadingRoomCardProps> = ({ room, onPress }) => {
-  const isFull = room.l_occupied >= room.l_count;
-  const occupancyPercentage = room.l_count > 0 ? (room.l_occupied / room.l_count) * 100 : 0;
+  const count = parseInt(room.l_count as any, 10) || 0;
+  const occupied = parseInt(room.l_occupied as any, 10) || 0;
+  const available = Math.max(0, count - occupied);
+  const isFull = count > 0 && available === 0;
+  const occupancyPercentage = count > 0 ? (occupied / count) * 100 : 0;
   return (
     <TouchableOpacity 
       style={[styles.card, isFull && styles.cardFull]} 
       onPress={() => onPress(room)}
       disabled={isFull}
+      activeOpacity={0.7}
     >
       <View style={styles.header}>
-        <Text style={styles.roomName}>{room.l_room_name}</Text>
-        {room.l_flag_beacon_validation === "1" || room.l_flag_beacon_validation === 1 ? (
+        <Text preset="t4Bold" color={textColors.primary} style={styles.roomNameFlex}>
+          {room.l_room_name}
+        </Text>
+        {(room.l_flag_beacon_validation === "1" || room.l_flag_beacon_validation === 1) ? (
             <View style={styles.badge}>
-                <Text style={styles.badgeText}>Beacon Auth Req.</Text>
+                <Text preset="t7Bold" color={textColors.blue}>Beacon</Text>
             </View>
         ) : null}
       </View>
       <View style={styles.statsContainer}>
-        <Text style={styles.statsText}>
-          {room.l_occupied} / {room.l_count} Available
-        </Text>
-        <Text style={styles.percentageText}>
-          {occupancyPercentage.toFixed(1)}% Full
-        </Text>
+        <View style={styles.statsHeader}>
+          <Text preset="t7Medium" color={textColors.secondary}>
+            {occupied} / {count}
+          </Text>
+          <View style={styles.availableBadge}>
+            {!isFull && (
+              <Text preset="t7Medium" color={textColors.tertiary}>
+                잔여좌석:
+              </Text>
+            )}
+            <Text preset="t6Bold" color={isFull ? textColors.red : textColors.blue}>
+              {isFull ? '만석' : `${available}석`}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.progressBarBg}>
+          <View style={[
+            styles.progressBarFill, 
+            { width: `${occupancyPercentage}%`, backgroundColor: isFull ? textColors.red : textColors.blue }
+          ]} />
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -38,54 +61,61 @@ export const ReadingRoomCard: React.FC<ReadingRoomCardProps> = ({ room, onPress 
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 8,
-    marginHorizontal: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
+    marginHorizontal: 20,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   cardFull: {
     opacity: 0.5,
+    backgroundColor: '#f9fafb',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    marginBottom: 16,
   },
-  roomName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+  roomNameFlex: {
+    flex: 1,
+    marginRight: 12,
   },
   badge: {
-    backgroundColor: '#e3f2fd',
-    paddingHorizontal: 8,
+    backgroundColor: '#e8f3ff',
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeText: {
-    fontSize: 12,
-    color: '#1976d2',
-    fontWeight: '600',
+    borderRadius: 8,
   },
   statsContainer: {
+    marginTop: 4,
+  },
+  statsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 8,
   },
-  statsText: {
-    fontSize: 14,
-    color: '#666',
+  availableBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
-  percentageText: {
-    fontSize: 14,
-    color: '#e53935',
-    fontWeight: '600',
+  progressBarBg: {
+    width: '100%',
+    height: 8,
+    backgroundColor: '#e5e7eb',
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 999,
   },
 });

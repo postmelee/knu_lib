@@ -1,0 +1,8 @@
+{
+  "name": "beacon-ranging",
+  "version": "1.0.0",
+  "description": "iOS CoreLocation iBeacon ranging for KNU Library",
+  "main": "index.ts",
+  "author": "postmelee",
+  "homepage": "https://github.com/postmelee/knu_lib"
+}

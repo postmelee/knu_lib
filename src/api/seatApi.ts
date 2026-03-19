@@ -29,7 +29,6 @@ import type {
   GetMyInfoResponse, 
   ReadingRoom, 
   BeaconAuthResponse, 
-  ActionResponse,
   SeatActionResponse 
 } from './types/seat';
 
@@ -54,37 +53,41 @@ export const getMyInformation = async (id: string, pw: string): Promise<GetMyInf
  * 3.1 Fetching Rooms
  */
 export const getReadingRooms = async (): Promise<ReadingRoom[]> => {
-  const response = await seatApiClient.get<ReadingRoom[]>('/Clicker/GetClickerReadingRooms');
-  return response.data;
+  const response = await seatApiClient.get<any>('/Clicker/GetClickerReadingRooms');
+  return response.data._Model_lg_clicker_reading_room_brief_list || [];
 };
 
 /**
  * 3.1.5 Fetch Reading Room Seats HTML (for parsing)
  */
-export const getReadingRoomSeatsHTML = async (roomId: string, id: string, pw: string): Promise<string> => {
+export const getReadingRoomSeatsHTML = async (roomId: string, id: string, pw: string, guid: string = ''): Promise<string> => {
     const encId = encodeURIComponent(spongeEncrypt(id));
     const encPw = encodeURIComponent(spongeEncrypt(pw));
     // Notice the spec says we pass encrypted ID/PW to this HTML endpoint as well or plain? 
     // Looking at 4.userseatmobile.txt, userid and userpass look encrypted: `userid=AiZdo...`
     // We will use the encrypted ones.
     const response = await seatApiClient.get<string>(
-      `/Clicker/UserSeatMobile/${roomId}?userid=${encId}&userpass=${encPw}&devicename=iphone&guid=&wifi=&Beacon=&wifimac=&token=&RequestDateTime=`
+      `/Clicker/UserSeatMobile/${roomId}?userid=${encId}&userpass=${encPw}&devicename=iphone&guid=${encodeURIComponent(guid)}&wifi=&Beacon=&wifimac=&token=&RequestDateTime=`
     );
     return response.data;
   };
 
 /**
  * 3.2 Beacon Authentication
+ * Major/Minor/RSSI come from actual BLE iBeacon scan.
  */
-export const doBeaconAction = async (id: string, pw: string, ssid: string = 'KNU_WLAN', bssid: string = ''): Promise<BeaconAuthResponse> => {
+export const doBeaconAction = async (
+  id: string, pw: string,
+  major: number, minor: number, rssi: number,
+  ssid: string = '', bssid: string = ''
+): Promise<BeaconAuthResponse> => {
   const encId = encodeURIComponent(spongeEncrypt(id));
   const encPw = encodeURIComponent(spongeEncrypt(pw));
   
-  // Target Beacon UUID from spec
   const beaconUid = '24ddf4118cf1440c87cde368daf9c93e';
   
   const response = await seatApiClient.get<BeaconAuthResponse>(
-    `/Beacon/DoClickerBeaconAction?Uid=${beaconUid}&UserId=${encId}&UserPass=${encPw}&Name=RECO&Major=10001&Minor=103&Rssi=0&Wifi=${encodeURIComponent(ssid)}&WifiMac=${encodeURIComponent(bssid)}`
+    `/Beacon/DoClickerBeaconAction?Uid=${beaconUid}&UserId=${encId}&UserPass=${encPw}&Name=RECO&Major=${major}&Minor=${minor}&Rssi=${rssi}&Wifi=${encodeURIComponent(ssid)}&WifiMac=${encodeURIComponent(bssid)}`
   );
   return response.data;
 };
@@ -92,13 +95,14 @@ export const doBeaconAction = async (id: string, pw: string, ssid: string = 'KNU
 /**
  * 3.3 Seat Reservation
  */
-export const reserveSeat = async (seatId: string, id: string, pw: string, beaconId: string = ''): Promise<ActionResponse> => {
+export const reserveSeat = async (seatId: string, id: string, pw: string, beaconId: string = '', guid: string = ''): Promise<SeatActionResponse> => {
   const encId = encodeURIComponent(spongeEncrypt(id));
   const encPw = encodeURIComponent(spongeEncrypt(pw));
   
-  const response = await seatApiClient.get<ActionResponse>(
-    `/Clicker/ReadingRoomAction?ActionCode=0&SeatId=${seatId}&UserId=${encId}&UserPass=${encPw}&DeviceName=android&Kiosk=false&Guid=&Wifi=&Scanner=&Geolocation=0&Beacon=${beaconId}&Eng=False`
+  const response = await seatApiClient.get<SeatActionResponse>(
+    `/Clicker/ReadingRoomAction?ActionCode=0&SeatId=${seatId}&UserId=${encId}&UserPass=${encPw}&DeviceName=android&Kiosk=false&Guid=${encodeURIComponent(guid)}&Wifi=&Scanner=&Geolocation=0&Beacon=${beaconId}&Eng=False`
   );
+  console.log(response.data)
   return response.data;
 };
 

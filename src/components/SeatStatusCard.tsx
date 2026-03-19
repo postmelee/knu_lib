@@ -7,7 +7,44 @@ import { textColors } from '@/styles/typography';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSeatState, useExtendSeat, useReleaseSeat } from '../hooks/queries/useSeat';
 import { UserState } from '../api/types/seat';
-import { parseTimeString, formatHHMM, formatRemaining } from '../utils/dateUtils';
+
+/**
+ * Parses a datetime string in "yyyyMMddHHmmss" format (e.g., "20260316142740")
+ * into a JS Date object. Returns null if parsing fails.
+ */
+function parseTimeString(timeStr?: string): Date | null {
+  if (!timeStr || timeStr.length < 14) return null;
+  const y = parseInt(timeStr.substring(0, 4), 10);
+  const mo = parseInt(timeStr.substring(4, 6), 10) - 1; // month is 0-indexed
+  const d = parseInt(timeStr.substring(6, 8), 10);
+  const h = parseInt(timeStr.substring(8, 10), 10);
+  const mi = parseInt(timeStr.substring(10, 12), 10);
+  const s = parseInt(timeStr.substring(12, 14), 10);
+  const date = new Date(y, mo, d, h, mi, s);
+  return isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * Formats a Date to "HH:MM" string
+ */
+function formatHHMM(date: Date | null): string {
+  if (!date) return '--:--';
+  const h = String(date.getHours()).padStart(2, '0');
+  const m = String(date.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
+}
+
+/**
+ * Returns remaining time as "H시간 MM분" or "MM분"
+ */
+function formatRemaining(ms: number): string {
+  if (ms <= 0) return '종료됨';
+  const totalMin = Math.ceil(ms / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h > 0) return `${h}시간 ${String(m).padStart(2, '0')}분`;
+  return `${m}분`;
+}
 
 export function SeatStatusCard() {
   const router = useRouter();
@@ -71,7 +108,7 @@ export function SeatStatusCard() {
   if (isLoading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', height: 200 }]}>
-        <ActivityIndicator size="large" color="#3182f6" />
+        <ActivityIndicator size="large" color={textColors.blue} />
       </View>
     );
   }
@@ -88,7 +125,7 @@ export function SeatStatusCard() {
                 <Text preset="t7Bold" color={textColors.secondary} style={styles.roomNameSpacing}>
                   {seatData?.raw?.l_clicker_user_status_seat_room_name || '도서관 열람실'}
                 </Text>
-                <Text preset="t3Bold" color={textColors.primary}>
+                <Text style={{marginLeft: -5}} preset="t3Bold" color={textColors.primary}>
                   {seatData?.raw?.l_clicker_user_status_seat_number || ''}번 좌석
                 </Text>
               </View>
@@ -125,11 +162,11 @@ export function SeatStatusCard() {
           {/* Empty State */}
           <View style={styles.emptyBox}>
             <View style={styles.emptyIconCircle}>
-              <MaterialIcons name="event-seat" size={20} color={textColors.tertiary} />
+              <MaterialIcons name="event-seat" size={26} color={textColors.tertiary} />
             </View>
             <View style={styles.emptyTextGroup}>
-              <Text preset="t7Bold" color={textColors.secondary}>현재 이용 중인 좌석이 없습니다.</Text>
-              <Text preset="t8Medium" color={textColors.tertiary}>도서관 좌석을 예약하고 열람실을 이용해보세요.</Text>
+              <Text preset="t6Bold" color={textColors.secondary}>현재 이용 중인 좌석이 없습니다.</Text>
+              <Text preset="t7Medium" color={textColors.tertiary}>도서관 좌석을 예약하고 열람실을 이용해보세요.</Text>
             </View>
           </View>
 
@@ -164,7 +201,8 @@ const styles = StyleSheet.create({
   cardBox: {
     backgroundColor: '#f9fafb',
     borderRadius: 16,
-    padding: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     marginTop: 12,
     marginBottom: 12,
     borderWidth: 1,
@@ -201,7 +239,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#3182f6',
+    backgroundColor: textColors.blue,
     borderRadius: 999,
   },
   timeFooter: {

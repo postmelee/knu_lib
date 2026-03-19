@@ -1,16 +1,24 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Button, ActivityIndicator, Alert, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ActivityIndicator, Alert, ScrollView, TouchableOpacity } from 'react-native';
 import { useBeaconAuth, useReserveSeat, useReadingRoomSeats } from '../hooks/queries/useSeat';
 import { ParsedSeat } from '../api/types/seat';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
+import { Text } from '../components/Text';
+import { Button } from '../components/Button';
+import { textColors } from '../styles/typography';
 
 export const SeatReservationScreen: React.FC = () => {
   const router = useRouter();
+  const navigation = useNavigation();
   const params = useLocalSearchParams<{ roomId: string, roomName: string, requireBeacon: string }>();
   
   const { roomId, roomName } = params;
   const isBeaconRequired = params.requireBeacon === 'true';
   
+  useEffect(() => {
+    navigation.setOptions({ title: roomName });
+  }, [navigation, roomName]);
+
   const [step, setStep] = useState(isBeaconRequired ? 'BEACON_AUTH' : 'SEAT_SELECTION');
   const [selectedSeat, setSelectedSeat] = useState<ParsedSeat | null>(null);
 
@@ -21,6 +29,13 @@ export const SeatReservationScreen: React.FC = () => {
       // Only fetch seats if we are on the selection step (or you could prefetch)
       step === 'SEAT_SELECTION' ? roomId : ''
   );
+
+  const maxLeft = seats?.reduce((max, seat) => Math.max(max, seat.left), 0) || 1000;
+  const maxTop = seats?.reduce((max, seat) => Math.max(max, seat.top), 0) || 600;
+  
+  // Add some padding to the max dimensions (a seat box is 30px wide, plus some margin)
+  const mapWidth = maxLeft + 60;
+  const mapHeight = maxTop + 60;
 
   const handleBeaconAuth = () => {
       beaconMutation.mutate(undefined, {
@@ -48,46 +63,92 @@ export const SeatReservationScreen: React.FC = () => {
       return;
     }
 
-    reserveMutation.mutate(selectedSeat.id, {
-        onSuccess: () => {
-            Alert.alert("예약 완료", "좌석이 성공적으로 예약되었습니다!");
-            router.back();
-        },
-        onError: (error: any) => {
-            Alert.alert("예약 실패", error.message);
+    Alert.alert(
+      "좌석 예약",
+      `${selectedSeat.number}번 좌석을 예약하시겠습니까?`,
+      [
+        { text: "취소", style: "cancel" },
+        { 
+          text: "예약", 
+          onPress: () => {
+            reserveMutation.mutate(selectedSeat.id, {
+                onSuccess: () => {
+                    Alert.alert("예약 완료", "좌석이 성공적으로 예약되었습니다!");
+                    router.back();
+                },
+                onError: (error: any) => {
+                    Alert.alert("예약 실패", error.message);
+                }
+            });
+          }
         }
-    });
+      ]
+    );
   };
 
   const isLoading = beaconMutation.isPending || reserveMutation.isPending || isSeatsLoading;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{roomName}</Text>
-      
       {isLoading ? (
-          <ActivityIndicator size="large" style={{ marginTop: 20 }} />
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={textColors.blue} />
+        </View>
       ) : (
           <View style={styles.content}>
               {step === 'BEACON_AUTH' ? (
-                  <View style={styles.card}>
-                      <Text style={styles.cardTitle}>위치 확인 필요</Text>
-                      <Text style={styles.cardDesc}>
-                          이 열람실은 현장 출석 확인이 필요합니다. 아래 버튼을 눌러 위치를 인증해주세요.
-                      </Text>
-                      <Button title="위치 인증하기" onPress={handleBeaconAuth} color="#1976d2" />
+                  <View style={styles.authContainer}>
+                      <View style={styles.authInfo}>
+                          <Text preset="t3Bold" color={textColors.primary} style={styles.authTitle}>
+                              도서관 위치 인증
+                          </Text>
+                          <Text preset="t6Medium" color={textColors.secondary} style={styles.authDesc}>
+                              이 열람실은 현장 출석 확인이 필요합니다.{'\n'}
+                              휴대폰 블루투스를 켜고 비콘 인증을 진행해주세요.
+                          </Text>
+                      </View>
+                      
+                      {beaconMutation.isPending ? (
+                          <View style={styles.scanningContainer}>
+                              <ActivityIndicator size="large" color={textColors.blue} />
+                              <Text preset="t6Medium" color={textColors.secondary} style={styles.scanningText}>
+                                  주변 비콘 탐색 중...
+                              </Text>
+                          </View>
+                      ) : (
+                          <Button variant="fill" color="primary" size="xlarge" onPress={handleBeaconAuth}>
+                             위치 인증하기
+                          </Button>
+                      )}
                   </View>
               ) : (
-                  <View style={styles.card}>
-                      <Text style={styles.cardTitle}>좌석 선택</Text>
-                      {selectedSeat && (
-                          <Text style={styles.selectedSeatText}>
-                              선택됨: {selectedSeat.number}번 좌석
-                          </Text>
-                      )}
+                  <View style={styles.selectionContainer}>
+                      <View style={styles.selectionHeader}>
+                          <Text preset="t4Bold" color={textColors.primary}>좌석 선택</Text>
+                          {selectedSeat ? (
+                              <Text preset="t5Bold" color={textColors.blue}>
+                                  {selectedSeat.number}번 좌석 선택됨
+                              </Text>
+                          ) : (
+                              <Text preset="t6Medium" color={textColors.tertiary}>
+                                  원하시는 좌석을 길게 누르거나 탭하세요
+                              </Text>
+                          )}
+                      </View>
                       
-                      <ScrollView horizontal style={styles.mapContainer}>
-                          <ScrollView style={{ minWidth: 1000, minHeight: 600 }}>
+                      <ScrollView 
+                          horizontal 
+                          style={styles.mapContainer}
+                          contentContainerStyle={{ minWidth: mapWidth }}
+                      >
+                          <ScrollView 
+                              style={{ minWidth: mapWidth, minHeight: mapHeight }}
+                              contentContainerStyle={{ width: mapWidth, height: mapHeight }}
+                              maximumZoomScale={3}
+                              minimumZoomScale={0.5}
+                              bouncesZoom={true}
+                              centerContent={true}
+                          >
                               {seats?.map(seat => (
                                   <TouchableOpacity
                                       key={seat.id}
@@ -100,10 +161,11 @@ export const SeatReservationScreen: React.FC = () => {
                                       disabled={seat.isOccupied}
                                       onPress={() => handleSeatPress(seat)}
                                   >
-                                      <Text style={[
-                                          styles.seatText,
-                                          seat.isOccupied && styles.seatTextOccupied
-                                      ]}>
+                                      <Text preset="t8Bold" color={
+                                          selectedSeat?.id === seat.id 
+                                              ? textColors.white 
+                                              : (seat.isOccupied ? textColors.disabled : textColors.secondary)
+                                      }>
                                           {seat.number}
                                       </Text>
                                   </TouchableOpacity>
@@ -111,12 +173,17 @@ export const SeatReservationScreen: React.FC = () => {
                           </ScrollView>
                       </ScrollView>
 
-                      <Button 
-                          title={`${selectedSeat ? selectedSeat.number + '번 좌석 ' : ''}예약하기`} 
-                          onPress={handleReservation} 
-                          color="#2e7d32" 
-                          disabled={!selectedSeat || reserveMutation.isPending}
-                      />
+                      <View style={styles.footer}>
+                          <Button 
+                              variant={selectedSeat ? 'fill' : 'weak'}
+                              color={selectedSeat ? 'primary' : 'dark'}
+                              size="xlarge"
+                              onPress={handleReservation} 
+                              disabled={!selectedSeat || reserveMutation.isPending}
+                          >
+                              {selectedSeat ? `${selectedSeat.number}번 좌석 예약하기` : '좌석을 선택해주세요'}
+                          </Button>
+                      </View>
                   </View>
               )}
           </View>
@@ -128,78 +195,87 @@ export const SeatReservationScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 16,
+    backgroundColor: '#ffffff',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#333',
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,
   },
-  card: {
+  
+  // -- Auth Step --
+  authContainer: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: 20,
+    padding: 24,
+    justifyContent: 'center',
+  },
+  authInfo: {
+    alignItems: 'center',
+    marginBottom: 48,
+  },
+  authTitle: {
+    marginBottom: 12,
+  },
+  authDesc: {
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  scanningContainer: {
+    height: 56, // matches Button xlarge size
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    backgroundColor: '#f9fafb',
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    gap: 12,
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
+  scanningText: {
+    // text preset applied directly
   },
-  cardDesc: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 20,
+  
+  // -- Selection Step --
+  selectionContainer: {
+    flex: 1,
+    paddingTop: 16,
   },
-  selectedSeatText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1976d2',
-    marginBottom: 10,
+  selectionHeader: {
+    paddingHorizontal: 24,
+    marginBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   mapContainer: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 8,
-    marginBottom: 20,
-    backgroundColor: '#fafafa'
+    backgroundColor: '#f9fafb',
   },
   seatBox: {
     position: 'absolute',
-    width: 30,
-    height: 30,
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#4caf50',
-    backgroundColor: '#e8f5e9',
-    borderRadius: 4,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#ffffff',
+    borderRadius: 6,
   },
   seatOccupied: {
-    borderColor: '#f44336',
-    backgroundColor: '#ffebee',
-    opacity: 0.7,
+    borderColor: '#f2f4f6',
+    backgroundColor: '#f9fafb',
   },
   seatSelected: {
-    borderColor: '#1976d2',
-    backgroundColor: '#1976d2',
+    borderColor: '#3182f6',
+    backgroundColor: '#3182f6',
   },
-  seatText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#388e3c',
+  footer: {
+    padding: 20,
+    paddingBottom: 40,
+    backgroundColor: '#ffffff',
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
   },
-  seatTextOccupied: {
-    color: '#d32f2f',
-  }
 });
