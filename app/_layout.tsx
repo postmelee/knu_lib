@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import { useAuthSession } from '@/hooks/queries/useAuth';
+import { textColors } from '@/styles/typography';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -57,7 +58,17 @@ export default function RootLayout() {
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="login" options={{ headerShown: false, gestureEnabled: false }} />
-          <Stack.Screen name="loan-details" options={{ headerShown: false }} />
+          <Stack.Screen name="loan-details" options={{ 
+                    headerShown: true,
+                    title: '대출 목록', // Dynamic title will be set in the screen
+                    headerBackTitle: '뒤로',
+                    headerTintColor: textColors.primary,
+                    headerTitleStyle: {
+                      fontFamily: 'Pretendard-Medium',
+                      fontSize: 18,
+                    },
+                    headerShadowVisible: false,
+                  }}  />
         </Stack>
       </AuthGate>
     </QueryClientProvider>

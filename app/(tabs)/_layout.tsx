@@ -30,7 +30,7 @@ export default function TabsLayout() {
             fontFamily: 'Pretendard-Medium',
             fontSize: 18,
           },
-          headerShadowVisible: true,
+          headerShadowVisible: false,
         }} 
       />
     </Stack>
