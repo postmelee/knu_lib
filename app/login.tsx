@@ -3,8 +3,7 @@ import {
   View,
   StyleSheet,
   TextInput,
-  KeyboardAvoidingView,
-  Platform,
+  ScrollView,
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -46,19 +45,19 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+        bounces={false}
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.content}>
-          {/* 헤더 */}
           <View style={styles.header}>
-            <Text style={styles.logo}>📚</Text>
             <Text preset="t2Bold" color={textColors.primary} style={styles.titleSpacing}>강남대학교 도서관</Text>
             <Text preset="t6Medium" color={textColors.secondary}>학번과 비밀번호로 로그인하세요</Text>
           </View>
 
-          {/* 폼 */}
           <View style={styles.form}>
             <View style={styles.inputGroup}>
               <Text preset="t7Bold" color={textColors.secondary} style={styles.labelSpacing}>학번</Text>
@@ -106,7 +105,7 @@ export default function LoginScreen() {
             </Button>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </ScrollView>
       <StatusBar style="dark" />
     </View>
   );
@@ -117,21 +116,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f9fafb',
   },
-  keyboardView: {
-    flex: 1,
+  scrollContent: {
+    paddingTop: '35%',
+    paddingBottom: 40,
   },
   content: {
-    flex: 1,
-    justifyContent: 'center',
     paddingHorizontal: 24,
   },
   header: {
     alignItems: 'center',
     marginBottom: 40,
-  },
-  logo: {
-    fontSize: 48,
-    marginBottom: 16,
   },
   titleSpacing: {
     marginBottom: 8,
