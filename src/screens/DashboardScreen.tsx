@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { useSeatState, useReadingRooms } from '../hooks/queries/useSeat';
 import { UserState } from '../api/types/seat';
 import { useAuthSession } from '../hooks/queries/useAuth';

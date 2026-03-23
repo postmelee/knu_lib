@@ -69,7 +69,7 @@ function addDDay(books: Book[]): BookWithDDay[] {
  * Swift 참조: LibraryWebRepositoryImpl.getRentalBooks
  * GET /MyLibrary?q=1&Userid={paddedId}&Userpass={password}
  */
-export async function fetchRentalBooks(): Promise<BookWithDDay[]> {
+export async function fetchRentalBooks(isHistory: boolean = false): Promise<BookWithDDay[]> {
   const session = await getStoredSession();
   if (!session) {
     throw new Error('No stored session. Please login first.');
@@ -79,7 +79,7 @@ export async function fetchRentalBooks(): Promise<BookWithDDay[]> {
 
   const { data: html } = await api.get<string>('/MyLibrary', {
     params: {
-      q: 1,
+      q: isHistory ? 1 : undefined,
       Userid: paddedId,
       Userpass: session.credentials.password,
     },
