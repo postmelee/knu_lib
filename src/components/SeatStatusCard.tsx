@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Text } from '@/components/Text';
 import { Button } from '@/components/Button';
@@ -152,7 +152,7 @@ export function SeatStatusCard() {
             <Button variant="weak" color="danger" size="large" onPress={handleReturn} style={styles.flexButton} disabled={releaseMutation.isPending}>
               {releaseMutation.isPending ? '처리중' : '퇴실하기'}
             </Button>
-            <Button variant="weak" color="dark" size="large" onPress={handleExtend} style={styles.flexButton} disabled={extendMutation.isPending}>
+            <Button variant="weak" color="primary" size="large" onPress={handleExtend} style={styles.flexButton} disabled={extendMutation.isPending}>
               {extendMutation.isPending ? '처리중' : '연장하기'}
             </Button>
           </View>
@@ -171,7 +171,7 @@ export function SeatStatusCard() {
           </View>
 
           <View style={styles.reserveButtonContainer}>
-            <Button variant="fill" color="primary" size="large" onPress={handleReserve} style={styles.fullWidth}>좌석 예약하기</Button>
+            <Button variant="weak" color="primary" size="large" onPress={handleReserve} style={styles.fullWidth}>좌석 예약하기</Button>
           </View>
         </>
       )}

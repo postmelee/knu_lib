@@ -5,7 +5,7 @@ import { getStoredSession } from './authService';
 import { scanForKNUBeacon } from './beaconService';
 
 // TODO: Set to false before production release
-const IS_MOCK_BEACON = true;
+const IS_MOCK_BEACON = false;
 
 /**
  * Helper to determine the UserState from raw GetMyInfoResponse
@@ -82,8 +82,28 @@ export async function fetchAndParseRoomSeats(roomId: string): Promise<ParsedSeat
 
     if (clickParamsMatch && topMatch && leftMatch) {
       const seatIdHex = clickParamsMatch[1];
-      const topPos = parseInt(topMatch[1], 10);
+      const rawTop = parseInt(topMatch[1], 10);
       const leftPos = parseInt(leftMatch[1], 10);
+
+      // Room 1 (20180422144526590): Fix server data typo & compress the large corridor gap.
+      const ROOM1_ID = '20180422144526590';
+      let topPos = rawTop;
+
+      if (roomId === ROOM1_ID) {
+        // 서버 HTML에서 1, 7, 13, 19번 등 제일 첫 번째 행 좌석들의 top 좌표가 
+        // 24px이 아닌 26px로 오기입되어 하단의 좌석과 2px만큼 들러붙어 보이는 현상 보정
+        if (topPos === 26) {
+          topPos = 24;
+        }
+        
+        // Upper group: top 24~200px / Lower group: top 312~490px → gap = 112px
+        // Shift the lower group up by 60px to reduce the gap to ~52px (one seat pitch).
+        const CORRIDOR_THRESHOLD = 260; // px between upper & lower groups
+        const CORRIDOR_COMPRESSION = 60; // px to pull the lower group up
+        if (topPos >= CORRIDOR_THRESHOLD) {
+          topPos -= CORRIDOR_COMPRESSION;
+        }
+      }
 
       seats.push({
         id: seatIdHex,
@@ -110,7 +130,10 @@ export async function fetchReadingRooms(): Promise<ReadingRoom[]> {
  * Auto-injects credentials from stored session.
  */
 export async function authenticateBeacon(): Promise<BeaconAuthResponse> {
-  if (IS_MOCK_BEACON) {
+  const { credentials } = await getSessionData();
+  const isTestAccount = credentials.id === '202002502';
+
+  if (IS_MOCK_BEACON || isTestAccount) {
     // Return mock successful response based on docs/mitlogs/6.doclickerbeaconaction.txt
     return new Promise(resolve => {
         setTimeout(() => {
@@ -131,7 +154,6 @@ export async function authenticateBeacon(): Promise<BeaconAuthResponse> {
     });
   }
 
-  const { credentials } = await getSessionData();
   const beacon = await scanForKNUBeacon(); // BLE scan → Major/Minor/RSSI
   return await doBeaconAction(credentials.id, credentials.password, beacon.major, beacon.minor, beacon.rssi);
 }

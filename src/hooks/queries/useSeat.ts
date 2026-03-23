@@ -79,19 +79,23 @@ export function useReadingRoomSeats(roomId: string) {
 }
 
 /**
- * 3. Beacon Auth Mutation
+ * 3. Beacon Auth Query (Auto-executes on mount if enabled)
  */
-export function useBeaconAuth() {
-    return useMutation({
-        mutationFn: async () => {
+export function useAutoBeaconAuth(enabled: boolean) {
+    return useQuery({
+        queryKey: [...SEAT_KEYS.all, 'beacon-auth'],
+        queryFn: async () => {
             const res = await authenticateBeacon();
             if (res.l_communication_status === "1" && res.l_communication_beacon_id) {
                 setTransientBeaconId(res.l_communication_beacon_id);
                 return res;
             } else {
-                throw new BeaconError(res.l_communication_message || "Beacon verification failed");
+                throw new BeaconError(res.l_communication_message || "비콘 인증에 실패했습니다.");
             }
-        }
+        },
+        enabled,
+        staleTime: 1000 * 60 * 5, // Cache success for 5 mins
+        retry: 0,
     });
 }
 

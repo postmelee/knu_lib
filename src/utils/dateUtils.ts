@@ -40,3 +40,17 @@ export function formatRemaining(ms: number): string {
   if (h > 0) return `${h}시간 ${String(m).padStart(2, '0')}분`;
   return `${m}분`;
 }
+
+/**
+ * Calculates start and end times for seat assignment (adds 6 hours)
+ */
+export function getSeatAssignmentTimeRange(): { start: string; end: string } {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const startString = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  
+  const end = new Date(now.getTime() + 6 * 60 * 60 * 1000);
+  const endString = `${pad(end.getHours())}:${pad(end.getMinutes())}`;
+  
+  return { start: startString, end: endString };
+}

@@ -8,7 +8,7 @@
  * Both paths return { major, minor, rssi } for server-side authentication.
  */
 
-import { Platform, PermissionsAndroid } from 'react-native';
+import { Platform, PermissionsAndroid, Alert } from 'react-native';
 import { BeaconError } from '../utils/errors';
 
 // ── Constants ──────────────────────────────────────────────
@@ -78,20 +78,43 @@ function parseIBeacon(manufacturerData: string): {
 }
 
 async function requestAndroidBLEPermissions(): Promise<boolean> {
-  if (Number(Platform.Version) >= 31) {
-    const granted = await PermissionsAndroid.requestMultiple([
-      PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-      PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-    ]);
-    return (
-      granted['android.permission.BLUETOOTH_SCAN'] === PermissionsAndroid.RESULTS.GRANTED &&
-      granted['android.permission.BLUETOOTH_CONNECT'] === PermissionsAndroid.RESULTS.GRANTED &&
-      granted['android.permission.ACCESS_FINE_LOCATION'] === PermissionsAndroid.RESULTS.GRANTED
+  const permissions = Number(Platform.Version) >= 31
+    ? [
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      ]
+    : [PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION];
+
+  // 1. 이미 승인되었는지 확인
+  const checks = await Promise.all(permissions.map(p => PermissionsAndroid.check(p)));
+  if (checks.every(isGranted => isGranted)) return true;
+
+  // 2. 권한이 없을 경우, 시스템 팝업을 띄우기 전에 이유를 설명하는 Alert 제공 (Android 권장 UX)
+  return new Promise((resolve) => {
+    Alert.alert(
+      '필수 권한 안내',
+      '도서관 열람실의 비콘을 스캔하여 좌석을 인증하기 위해 블루투스 및 위치 권한이 필요합니다.',
+      [
+        {
+          text: '취소',
+          style: 'cancel',
+          onPress: () => resolve(false),
+        },
+        {
+          text: '권한 허용하기',
+          onPress: async () => {
+            const result = await PermissionsAndroid.requestMultiple(permissions);
+            const allGranted = Object.values(result).every(
+              res => res === PermissionsAndroid.RESULTS.GRANTED
+            );
+            resolve(allGranted);
+          },
+        },
+      ],
+      { cancelable: false }
     );
-  }
-  const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
-  return granted === PermissionsAndroid.RESULTS.GRANTED;
+  });
 }
 
 function scanWithBLE(): Promise<BeaconScanResult> {

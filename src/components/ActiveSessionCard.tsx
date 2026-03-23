@@ -4,7 +4,7 @@ import { useSeatState, useExtendSeat, useReleaseSeat } from '../hooks/queries/us
 import { useLogout } from '../hooks/queries/useAuth';
 
 export const ActiveSessionCard: React.FC = () => {
-  const { data, refetch } = useSeatState();
+  const { data } = useSeatState();
   const raw = data?.raw;
 
   const extendMutation = useExtendSeat();
