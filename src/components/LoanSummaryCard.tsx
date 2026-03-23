@@ -52,9 +52,9 @@ export function LoanSummaryCard() {
                 </View>
                 <View style={[
                   styles.ddayBadge,
-                  book.dDay <= 3 ? styles.ddayRed : styles.ddayGray,
+                  book.dDay <= 3 ? styles.ddayRed : styles.ddayBlue,
                 ]}>
-                  <Text preset="t7Bold" color={book.dDay <= 3 ? textColors.red : textColors.secondary}>
+                  <Text preset="t7Bold" color={book.dDay <= 3 ? textColors.red : textColors.blue}>
                     {book.dDay < 0 ? `D+${Math.abs(book.dDay)}` : `D-${book.dDay}`}
                   </Text>
                 </View>
@@ -135,8 +135,8 @@ const styles = StyleSheet.create({
   ddayRed: {
     backgroundColor: '#ffecee',
   },
-  ddayGray: {
-    backgroundColor: '#f2f4f6',
+  ddayBlue: {
+    backgroundColor: '#e8f3ff',
   },
   fullWidth: {
     width: '100%',

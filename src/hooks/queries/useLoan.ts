@@ -6,10 +6,13 @@ const LOAN_KEY = ['loans', 'rentalBooks'] as const;
 /**
  * 대출 도서 목록 조회 훅
  */
-export function useRentalBooks() {
+export function useRentalBooks(isHistory: boolean = false) {
   return useQuery({
-    queryKey: LOAN_KEY,
-    queryFn: fetchRentalBooks,
+    queryKey: ['loans', 'rentalBooks', isHistory],
+    queryFn: async () => {
+      const data = await fetchRentalBooks(isHistory);
+      return data;
+    },
     staleTime: 1000 * 60 * 5, // 5분
   });
 }

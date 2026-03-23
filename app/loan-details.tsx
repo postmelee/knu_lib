@@ -5,6 +5,7 @@ import {
   FlatList,
   ActivityIndicator,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -16,7 +17,8 @@ import type { BookWithDDay } from '@/api/types/book';
 
 export default function LoanDetailsScreen() {
   const router = useRouter();
-  const { data: books, isLoading, isError, refetch } = useRentalBooks();
+  const [isHistory, setIsHistory] = React.useState(false);
+  const { data: books, isLoading, isError, refetch } = useRentalBooks(isHistory);
 
   const handleExtend = (book: BookWithDDay) => {
     if (book.renewable !== '가능') {
@@ -31,10 +33,41 @@ export default function LoanDetailsScreen() {
 
   const renderBook = ({ item }: { item: BookWithDDay }) => {
     const isRenewable = item.renewable === '가능';
-    const isOverdue = item.dDay < 0;
+    
+    let isOverdue = false;
+    let isReturned = false;
 
-    const ddayColor = isOverdue ? '#f04452' : item.dDay <= 3 ? '#ea580c' : textColors.secondary;
-    const ddayBg = isOverdue ? '#ffecee' : item.dDay <= 3 ? '#fff7ed' : '#f2f4f6';
+    // 1. dDay를 우선 기준으로 상태 판별
+    if (item.dDay < 0) {
+      // 0 미만일 때: returnStatus를 이용해 실제 연체인지 과거에 반납된 것인지 구분
+      if (item.returnedStatus && item.returnedStatus.includes('연체')) {
+        isOverdue = true;
+      } else {
+        isReturned = true;
+      }
+    } else {
+      // 0 이상일 때: 명시적인 반납이 아니면 모두 대출 중으로 판별 (수정 전 원리와 동일)
+      if (item.returnedStatus && item.returnedStatus.includes('반납')) {
+        isReturned = true;
+      }
+    }
+
+    // 2. 색상 규칙 적용 (Button.tsx 토큰 기준)
+    let ddayBg = '#e8f3ff';     // 기본: 파란색 계열
+    let ddayColor = '#3182f6';
+    let ddayText = `D-${item.dDay}`;
+
+    if (isReturned) {
+      // 반납 완료: 회색 계열 (Dark Weak)
+      ddayBg = '#f2f4f6';
+      ddayColor = '#4e5968';
+      ddayText = '반납 완료';
+    } else if (isOverdue || item.dDay <= 1) {
+      // 연체 혹 하루 남음: 빨간색 계열 (Danger Weak)
+      ddayBg = '#ffecee';
+      ddayColor = '#f04452';
+      ddayText = isOverdue ? `D+${Math.abs(item.dDay)}` : `D-${item.dDay}`;
+    }
 
     return (
       <View style={styles.bookCard}>
@@ -43,54 +76,70 @@ export default function LoanDetailsScreen() {
             {item.name}
           </Text>
           <View style={[styles.ddayBadge, { backgroundColor: ddayBg }]}>
-            <Text preset="t7Bold" color={ddayColor}>
-              {isOverdue ? `D+${Math.abs(item.dDay)}` : `D-${item.dDay}`}
+            <Text preset="t7Bold" style={{ color: ddayColor }}>
+              {ddayText}
             </Text>
           </View>
         </View>
 
         <View style={styles.bookMeta}>
           <View style={styles.metaRow}>
-            <Text preset="t7Medium" color={textColors.tertiary}>대출일</Text>
+            <Text preset="t7Medium" color={textColors.secondary}>대출일</Text>
             <Text preset="t7Bold" color={textColors.primary}>{item.rentalDate}</Text>
           </View>
           <View style={styles.metaRow}>
-            <Text preset="t7Medium" color={textColors.tertiary}>반납예정</Text>
+            <Text preset="t7Medium" color={textColors.secondary}>반납예정</Text>
             <Text preset="t7Bold" color={textColors.primary}>{item.dueDate}</Text>
           </View>
-          <View style={styles.metaRow}>
-            <Text preset="t7Medium" color={textColors.tertiary}>상태</Text>
+           {!isReturned && (<View style={styles.metaRow}>
+            <Text preset="t7Medium" color={textColors.secondary}>상태</Text>
             <Text preset="t7Bold" color={textColors.primary}>{item.returnedStatus}</Text>
-          </View>
-          <View style={styles.metaRow}>
-            <Text preset="t7Medium" color={textColors.tertiary}>연장횟수</Text>
+          </View>)}
+          {isReturned && (<View style={styles.metaRow}>
+            <Text preset="t7Medium" color={textColors.secondary}>반납일</Text>
+            <Text preset="t7Bold" color={textColors.primary}>{item.returnedDate}</Text>
+          </View>)}
+          {!isReturned && ( <View style={styles.metaRow}>
+            <Text preset="t7Medium" color={textColors.secondary}>연장횟수</Text>
             <Text preset="t7Bold" color={textColors.primary}>
-              {item.renewCount === '해당없음' ? '0' : item.renewCount}회
+              {item.renewCount === '해당없음' ? '0' : item.renewCount}
             </Text>
-          </View>
+          </View>)}
         </View>
 
-        <Button
-          variant={isRenewable ? 'weak' : 'weak'}
-          color={isRenewable ? 'primary' : 'dark'}
-          size="large"
-          onPress={() => handleExtend(item)}
-          disabled={!isRenewable}
-          style={styles.fullWidth}
-        >
-          {isRenewable ? '연장하기' : '연장 불가'}
-        </Button>
+        {/* 반납 완료 도서는 연장 버튼을 보일 필요 없음 */}
+        {!isReturned && (
+          <Button
+            variant={isRenewable ? 'weak' : 'weak'}
+            color={isRenewable ? 'primary' : 'dark'}
+            size="large"
+            onPress={() => handleExtend(item)}
+            disabled={!isRenewable}
+            style={styles.fullWidth}
+          >
+            {isRenewable ? '연장하기' : '연장 불가'}
+          </Button>
+        )}
       </View>
     );
   };
 
   return (
     <View style={styles.container}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        <Button variant="weak" color="primary" size="small" onPress={() => router.back()}>← 돌아가기</Button>
-        <Text preset="t5Bold" color={textColors.primary}>전체 대출 현황</Text>
-        <View style={styles.headerRight} />
+      {/* 탭 네비게이션 */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tabButton, !isHistory && styles.activeTab]}
+          onPress={() => setIsHistory(false)}
+        >
+          <Text preset={!isHistory ? "t6Bold" : "t6Medium"} color={!isHistory ? textColors.primary : textColors.tertiary}>현재 대출 도서</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabButton, isHistory && styles.activeTab]}
+          onPress={() => setIsHistory(true)}
+        >
+          <Text preset={isHistory ? "t6Bold" : "t6Medium"} color={isHistory ? textColors.primary : textColors.tertiary}>전체 대출 기록</Text>
+        </TouchableOpacity>
       </View>
 
       {isLoading ? (
@@ -127,19 +176,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f9fafb',
   },
-  header: {
+  tabContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingBottom: 16,
-    paddingHorizontal: 20,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: '#e5e8eb',
+    paddingTop:2,
   },
-  headerRight: {
-    width: 80,
+  tabButton: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  activeTab: {
+    borderBottomColor: 'black',
   },
   center: {
     flex: 1,
@@ -187,13 +239,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     gap: 8,
-    marginBottom: 16,
   },
   metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   fullWidth: {
+    marginTop: 16,
     width: '100%',
   },
 });
