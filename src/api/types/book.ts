@@ -3,6 +3,7 @@
  * Swift 참조: DBModel.Book
  */
 export interface Book {
+  id: string;             // 도서 고유 ID (연장 등에 사용)
   num: string;            // 번호
   name: string;           // 도서명
   rentalDate: string;     // 대출 일자
