@@ -1,20 +1,27 @@
 {
   "expo": {
-    "name": "KNU_library",
+    "name": "강남대학교 도서관",
     "slug": "KNU_library",
     "scheme": "knu-library",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/Icon-iOS-Default-1024x1024@1x.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#ffffff",
+      "imageWidth": 200
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.postmelee.KNU-library",
+      "icon": {
+        "light": "./assets/Icon-iOS-Default-1024x1024@1x.png",
+        "dark": "./assets/Icon-iOS-Dark-1024x1024@1x.png",
+        "tinted": "./assets/Icon-iOS-Default-1024x1024@1x.png",
+        "backgroundColor": "#FFFFFF"
+      },
       "infoPlist": {
         "NSBluetoothAlwaysUsageDescription": "도서관 비콘 인증을 위해 블루투스가 필요합니다",
         "NSLocationWhenInUseUsageDescription": "비콘 탐색을 위해 위치 권한이 필요합니다"
@@ -22,9 +29,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "permissions": [
@@ -34,7 +40,7 @@
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_ADMIN"
       ],
-      "package": "com.postmelee.KNUlibrary"
+      "package": "com.postmelee.KNU_library"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -50,6 +56,13 @@
       ],
       "expo-secure-store"
     ],
+    "updates": {
+      "url": "https://u.expo.dev/0e3a8675-e72d-42c9-a468-27f21cc700cc",
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "extra": {
       "router": {},
       "eas": {

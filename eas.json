@@ -12,7 +12,19 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://lib.kangnam.ac.kr",
+        "EXPO_PUBLIC_APP_VERSION": "1.0.0",
+        "EXPO_PUBLIC_BEACON_UUID": "24ddf411-8cf1-440c-87cd-e368daf9c93e",
+        "EXPO_PUBLIC_BEACON_UID": "24ddf4118cf1440c87cde368daf9c93e",
+        "EXPO_PUBLIC_FEEDBACK_EMAIL": "meleeisdeveloping@gmail.com"
+      }
+    },
+    "preview-android": {
+      "android": {
+        "buildType": "apk"
+      }
     }
   },
   "submit": {
