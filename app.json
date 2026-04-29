@@ -16,12 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.postmelee.KNU-library",
-      "icon": {
-        "light": "./assets/Icon-iOS-Default-1024x1024@1x.png",
-        "dark": "./assets/Icon-iOS-Dark-1024x1024@1x.png",
-        "tinted": "./assets/Icon-iOS-Default-1024x1024@1x.png",
-        "backgroundColor": "#FFFFFF"
-      },
+      "icon": "./assets/Icon-iOS-Default-1024x1024@1x.png",
       "infoPlist": {
         "NSBluetoothAlwaysUsageDescription": "도서관 비콘 인증을 위해 블루투스가 필요합니다",
         "NSLocationWhenInUseUsageDescription": "비콘 탐색을 위해 위치 권한이 필요합니다"
