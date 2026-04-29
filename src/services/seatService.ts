@@ -131,9 +131,8 @@ export async function fetchReadingRooms(): Promise<ReadingRoom[]> {
  */
 export async function authenticateBeacon(): Promise<BeaconAuthResponse> {
   const { credentials } = await getSessionData();
-  const isTestAccount = credentials.id === '202002502';
 
-  if (IS_MOCK_BEACON || isTestAccount) {
+  if (IS_MOCK_BEACON) {
     // Return mock successful response based on docs/mitlogs/6.doclickerbeaconaction.txt
     return new Promise(resolve => {
         setTimeout(() => {
@@ -183,4 +182,3 @@ export async function requestSeatRelease(seatId: string): Promise<SeatActionResp
   const { credentials } = await getSessionData();
   return await releaseSeat(seatId, credentials.id, credentials.password);
 }
-
