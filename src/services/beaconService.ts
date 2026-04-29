@@ -24,14 +24,20 @@ export interface BeaconScanResult {
 
 // ── Main Entry Point ──────────────────────────────────────
 export async function scanForKNUBeacon(): Promise<BeaconScanResult> {
-  if (Platform.OS === 'android') {
-    const permitted = await requestAndroidBeaconPermissions();
-    if (!permitted) {
-      throw new BeaconError('블루투스 및 위치 권한이 필요합니다.');
-    }
+  const permitted = await prepareBeaconScanPermissions();
+  if (!permitted) {
+    throw new BeaconError('블루투스 및 위치 권한이 필요합니다.');
   }
 
   return scanWithNativeRanging();
+}
+
+export async function prepareBeaconScanPermissions(): Promise<boolean> {
+  if (Platform.OS !== 'android') {
+    return true;
+  }
+
+  return requestAndroidBeaconPermissions();
 }
 
 // ══════════════════════════════════════════════════════════
