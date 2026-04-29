@@ -20,7 +20,7 @@ GitHub Issue: https://github.com/postmelee/knu_lib/issues/7
 | EAS projectId | `0e3a8675-e72d-42c9-a468-27f21cc700cc` | EAS 프로젝트 연결됨 |
 | EAS production build | `autoIncrement: true` | 제출 빌드 번호 관리 가능 |
 | EAS submit profile | `production: {}` | `ascAppId`는 App Store Connect 앱 생성 후 추가 필요 |
-| 개인정보처리방침 | `docs/privacy_policy.md` 존재 | App Store Connect에 공개 URL 필요 |
+| 개인정보처리방침 | `docs/privacy_policy.md` 존재, iOS 위치/비콘 문구 보강 | App Store Connect에 공개 URL 필요 |
 | App Store 문안 | `mydocs/tech/ios_app_store_metadata_20260430.md` 작성 | 제품 설명, 심사 노트, 개인정보 설문 초안 준비 |
 
 ## 로컬 검증 결과
@@ -29,6 +29,7 @@ GitHub Issue: https://github.com/postmelee/knu_lib/issues/7
 |---|---|---|
 | `npx expo config --type public` | 통과 | iOS bundleIdentifier, 권한 문구, EAS projectId, updates/runtimeVersion 해석 확인 |
 | `npx tsc --noEmit` | 통과 | TypeScript 오류 없음 |
+| `git diff --check` | 통과 | 문서 변경 공백 오류 없음 |
 
 ## 제출 전 필수 외부 작업
 
