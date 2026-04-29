@@ -11,6 +11,7 @@ import { textColors } from '../styles/typography';
 import { SeatItem } from '../components/SeatItem';
 import { useSeatMapLayout } from '../hooks/useSeatMapLayout';
 import { getSeatAssignmentTimeRange } from '../utils/dateUtils';
+import { prepareBeaconScanPermissions } from '../services/beaconService';
 
 export const SeatReservationScreen: React.FC = () => {
   const router = useRouter();
@@ -26,11 +27,53 @@ export const SeatReservationScreen: React.FC = () => {
   }, [navigation, roomName]);
 
   const [selectedSeat, setSelectedSeat] = useState<ParsedSeat | null>(null);
+  const [isBeaconPermissionReady, setIsBeaconPermissionReady] = useState(!isBeaconRequired);
+  const [isPreparingBeaconPermission, setIsPreparingBeaconPermission] = useState(false);
 
   const reserveMutation = useReserveSeat();
-  const autoBeacon = useAutoBeaconAuth(isBeaconRequired);
+  const autoBeacon = useAutoBeaconAuth(isBeaconRequired && isBeaconPermissionReady);
   
   const { data: seats, isLoading: isSeatsLoading } = useReadingRoomSeats(roomId);
+
+  const prepareBeaconPermission = useCallback(async () => {
+    if (!isBeaconRequired) {
+      setIsBeaconPermissionReady(true);
+      return;
+    }
+
+    setIsBeaconPermissionReady(false);
+    setIsPreparingBeaconPermission(true);
+    try {
+      const permitted = await prepareBeaconScanPermissions();
+      if (!permitted) {
+        Alert.alert(
+          "권한 필요",
+          "도서관 위치 인증을 위해 블루투스 및 위치 권한이 필요합니다.",
+          [
+            { text: "다시 시도", onPress: prepareBeaconPermission },
+            { text: "뒤로 가기", style: "cancel", onPress: () => router.back() },
+          ]
+        );
+        return;
+      }
+      setIsBeaconPermissionReady(true);
+    } catch (error: any) {
+      Alert.alert(
+        "권한 확인 실패",
+        error?.message || "블루투스 및 위치 권한을 확인하지 못했습니다.",
+        [
+          { text: "다시 시도", onPress: prepareBeaconPermission },
+          { text: "뒤로 가기", style: "cancel", onPress: () => router.back() },
+        ]
+      );
+    } finally {
+      setIsPreparingBeaconPermission(false);
+    }
+  }, [isBeaconRequired, router]);
+
+  useEffect(() => {
+    prepareBeaconPermission();
+  }, [prepareBeaconPermission]);
 
   useEffect(() => {
     if (autoBeacon.isError) {
@@ -43,7 +86,7 @@ export const SeatReservationScreen: React.FC = () => {
   }, [autoBeacon.isError, autoBeacon.error, router]);
 
   const handleSeatPress = useCallback((seat: ParsedSeat) => {
-      if (isBeaconRequired && autoBeacon.isLoading) {
+      if (isBeaconRequired && (isPreparingBeaconPermission || autoBeacon.isLoading)) {
           Alert.alert("인증 진행 중", "도서관 위치를 확인하고 있습니다. 잠시만 기다려주세요.");
           return;
       }
@@ -52,7 +95,7 @@ export const SeatReservationScreen: React.FC = () => {
           return;
       }
       setSelectedSeat(seat);
-  }, [isBeaconRequired, autoBeacon.isLoading, autoBeacon.isError]);
+  }, [isBeaconRequired, isPreparingBeaconPermission, autoBeacon.isLoading, autoBeacon.isError]);
 
   const handleReservation = () => {
     if (!selectedSeat) {
@@ -106,6 +149,9 @@ export const SeatReservationScreen: React.FC = () => {
     if (isBeaconRequired && autoBeacon.isLoading) {
       return '도서관 위치 확인 중...';
     }
+    if (isBeaconRequired && isPreparingBeaconPermission) {
+      return '권한 확인 중...';
+    }
     if (!selectedSeat) {
       return '좌석을 선택해주세요';
     }
@@ -113,7 +159,7 @@ export const SeatReservationScreen: React.FC = () => {
   };
 
   const isButtonDisabled = () => {
-    if (isBeaconRequired && (autoBeacon.isLoading || autoBeacon.isError)) return true;
+    if (isBeaconRequired && (isPreparingBeaconPermission || autoBeacon.isLoading || autoBeacon.isError)) return true;
     if (!selectedSeat) return true;
     if (reserveMutation.isPending) return true;
     return false;
@@ -181,7 +227,7 @@ export const SeatReservationScreen: React.FC = () => {
                       size="xlarge"
                       onPress={handleReservation} 
                       disabled={isButtonDisabled()}
-                      loading={reserveMutation.isPending || (isBeaconRequired && autoBeacon.isLoading)}
+                      loading={reserveMutation.isPending || (isBeaconRequired && (isPreparingBeaconPermission || autoBeacon.isLoading))}
                   >
                       {getButtonText()}
                   </Button>

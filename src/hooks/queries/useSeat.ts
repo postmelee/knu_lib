@@ -24,6 +24,16 @@ export const SEAT_KEYS = {
 export let transientBeaconId = '';
 export const setTransientBeaconId = (id: string) => { transientBeaconId = id; };
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new BeaconError(message)), timeoutMs);
+        promise
+            .then(resolve)
+            .catch(reject)
+            .finally(() => clearTimeout(timeout));
+    });
+}
+
 /**
  * 1. Seat Status Query (Evaluate State)
  *    Credentials are auto-injected by the service layer.
@@ -85,7 +95,11 @@ export function useAutoBeaconAuth(enabled: boolean) {
     return useQuery({
         queryKey: [...SEAT_KEYS.all, 'beacon-auth'],
         queryFn: async () => {
-            const res = await authenticateBeacon();
+            const res = await withTimeout(
+                authenticateBeacon(),
+                35_000,
+                '비콘 인증 요청이 지연되고 있습니다. 다시 시도해주세요.'
+            );
             if (res.l_communication_status === "1" && res.l_communication_beacon_id) {
                 setTransientBeaconId(res.l_communication_beacon_id);
                 return res;

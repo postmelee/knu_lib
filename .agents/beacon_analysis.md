@@ -7,7 +7,7 @@
 ```mermaid
 sequenceDiagram
     participant App as React Native App
-    participant Native as iOS CoreLocation / Android BLE
+    participant Native as iOS CoreLocation / Android BluetoothLeScanner
     participant Server as lib.kangnam.ac.kr
 
     App->>Native: KNU iBeacon 탐색 시작 (현재 코드 20초 제한)
@@ -35,15 +35,16 @@ sequenceDiagram
 
 - Core Bluetooth는 iBeacon advertising data 접근이 제한되므로 CoreLocation ranging을 사용한다.
 - 네이티브 모듈 위치: `modules/beacon-ranging/`
-- JS 진입점: `scanWithCoreLocation()` in `src/services/beaconService.ts`
+- JS 진입점: `scanWithNativeRanging()` in `src/services/beaconService.ts`
 - 권한: `NSLocationWhenInUseUsageDescription`, `NSBluetoothAlwaysUsageDescription`
 
 ### Android
 
-- `react-native-ble-plx`의 `startDeviceScan()`으로 raw manufacturer data를 읽는다.
-- iBeacon header, UUID, major, minor를 수동 파싱한다.
+- `modules/beacon-ranging`의 Android Expo module이 `BluetoothLeScanner`로 BLE advertisement를 스캔한다.
+- 네이티브 Kotlin 코드에서 iBeacon manufacturer data의 UUID, major, minor를 파싱한다.
 - Android 12 이상은 `BLUETOOTH_SCAN`, `BLUETOOTH_CONNECT`, `ACCESS_FINE_LOCATION` 권한이 필요하다.
 - Android 11 이하는 `ACCESS_FINE_LOCATION`이 필요하다.
+- Android는 BLE 스캔 전에 위치 서비스 활성화 여부도 확인한다.
 
 ## 4. 서버 인증 API
 
@@ -75,7 +76,7 @@ GET /Beacon/DoClickerBeaconAction
 ## 6. 검증 포인트
 
 - iOS 실제 기기에서 CoreLocation ranging 권한 팝업과 결과 수신 확인
-- Android 실제 기기에서 BLE 권한 팝업, Bluetooth powered-on 상태, manufacturer data 파싱 확인
+- Android 실제 기기에서 BLE 권한 팝업, Bluetooth powered-on 상태, 위치 서비스 활성화 상태, native manufacturer data 파싱 확인
 - `l_communication_beacon_id`가 예약/연장 요청에 전달되는지 확인
 - 타임아웃 메시지가 사용자에게 과도하게 빨리 표시되지 않는지 확인
 - 서버 실패 메시지를 그대로 Alert로 노출하는지 확인

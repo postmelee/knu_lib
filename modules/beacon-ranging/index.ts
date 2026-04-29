@@ -11,7 +11,7 @@ interface BeaconResult {
 const BeaconRangingModule = requireNativeModule('BeaconRanging');
 
 /**
- * Range for iBeacons matching the given UUID using iOS CoreLocation.
+ * Range for iBeacons matching the given UUID using the platform native module.
  * Returns the first detected beacon's { major, minor, rssi }.
  * Throws on timeout or permission error.
  */

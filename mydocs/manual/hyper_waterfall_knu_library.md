@@ -72,5 +72,5 @@ mydocs/
 
 ## 참고 자료
 
-- `alhangeul-macos` 공개 문서: https://github.com/postmelee/alhangeul-macos/tree/main/docs
-- Hyper-Waterfall 설명 문서: https://github.com/edwardkim/rhwp/blob/main/mydocs/manual/hyper_waterfall.md
+- `mydocs/manual/agent_code_hyperfall_rule_conflict.md`: 에이전트 기본 동작과 하이퍼-워터폴 충돌 처리 기준
+- `mydocs/manual/task_workflow_guide.md`: 타스크 진행 절차, 승인 간주 조건, 커밋/브랜치 규칙 기준
