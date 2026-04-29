@@ -1,130 +1,98 @@
-# 📚 도서관 앱 프로젝트 PRD (최종안)
+# KNU Library PRD - Agent Context
 
-이 문서는 도서관 앱의 성공적인 개발을 위한 **제품 요구사항 정의서(PRD)** 입니다. 
-본 문서는 프로젝트 진행에 있어 최우선으로 참고해야 할 **절대적인 개발 규칙 및 화면 명세서**로 작동합니다.
+이 문서는 코딩 에이전트가 빠르게 프로젝트 맥락을 파악하기 위한 보조 PRD다. 최신 운영 기준은 루트 `AGENTS.md`와 `mydocs/report/app_status_20260429.md`를 우선한다.
 
----
+## 1. 목표
 
-## 1. 프로젝트 목표 (Objective)
-- 도서관 출입, 좌석 관리, 도서 대출 등 핵심 기능을 **스크롤을 최소화한 단일 홈 화면(Single Home Screen)**에서 즉각적으로 사용할 수 있도록 제공한다.
-- 제일 중요한 기능인 **출입용 QR 코드**는 앱 실행 시 최우선으로 로드되어, 대기 시간 없이 즉시 사용할 수 있어야 한다.
+강남대학교 도서관의 핵심 사용 흐름을 하나의 네이티브 앱에서 제공한다.
 
----
+- 학생증 QR 출입
+- 열람실 좌석 조회, 예약, 연장, 퇴실
+- 도서 대출 목록과 반납 예정일 확인
+- 도서 연장 신청
 
-## 2. 화면 및 네비게이션 구조 (App Flow)
+## 2. 화면 구조
 
-앱은 단순하고 직관적인 플로우를 가집니다. (Expo Router 기준 파일 맵핑)
+| 화면 | 파일 | 상태 |
+|---|---|---|
+| 인증 게이트 | `app/_layout.tsx` | 구현됨 |
+| 로그인 | `app/login.tsx` | 구현됨 |
+| 홈 대시보드 | `app/(tabs)/index.tsx` | 구현됨 |
+| 열람실 목록 | `app/(tabs)/rooms.tsx` | 구현됨 |
+| 좌석 예약/조회 | `app/(tabs)/seat-reservation.tsx` | 구현됨 |
+| 대출 상세 | `app/loan-details.tsx` | 목록/상세 UI 구현, 도서 연장 호출은 현재 기준 브랜치 미반영 |
 
-1. **로그인 화면 (`app/login.tsx`)**: 최초 진입 시 학번/비밀번호 기반 인증.
-2. **홈 화면 (`app/(tabs)/index.tsx`)**: 앱의 메인 대시보드. QR, 좌석 조회, 요약 대출 현황 노출.
-3. **좌석 예약/조회 화면 (`app/seat-reservation.tsx`)**: 빈 좌석일 때 예약으로 넘어가는 뷰.
-4. **전체 대출 상세 화면 (`app/loan-details.tsx`)**: 전체 대출 목록 및 연장 처리 화면.
+## 3. 도메인 요구사항
 
----
+### Auth/User/QR
 
-## 3. 핵심 요구사항 및 기능 명세 (Core Features)
+- 로그인은 `GetMyinformation?login=true`로 유효성을 확인한 뒤 SmartCard API를 호출한다.
+- 학번은 필요 시 10자리로 zero-padding한다.
+- 세션은 `expo-secure-store`에 저장한다.
+- `AuthGate`가 저장 세션 존재 여부에 따라 로그인/홈 라우팅을 제어한다.
+- QR ID는 SmartCard 기반으로 표시하고, 새로고침 시 QR ID만 갱신할 수 있다.
 
-### 3.1. 인증 및 로그인 (Auth Flow)
-- 홈 화면 진입 전, **별도 로그인 화면**(`app/login.tsx`)이 존재한다.
-- 학번과 비밀번호를 입력하여 도서관 API(`/Account/RequestClickerSmartCardInformation`)로 인증한다.
-- 학번은 전송 시 **10자리 zero-padding** 처리된다 (예: `202002502` → `0202002502`).
-- 로그인 성공 시 응답(`SmartCard`)과 인증 정보를 `AsyncStorage`에 저장하고 홈 화면으로 라우팅한다.
-- `app/_layout.tsx`의 `AuthGate` 컴포넌트가 세션 존재 여부에 따라 자동으로 login/home 라우팅을 제어한다.
+### Seat/Beacon
 
-### 3.2. 학생 정보 & 출입 QR 코드 (우선순위 1)
-- **표시 정보**:
-  - 이름, 학번, 소속1(학부/학과), 소속2(단과대학)
-  - **동적 QR 코드 이미지** (기기 시간 또는 서버 시간 기반)
-  - QR 바코드 아래 **생성 시각 정보 노출** (예: 2026년 03월 12일 오전 09시 20분 17초)
-- **주요 기능 (동적 갱신 규칙)**: 
-  - 특정 시간 만료 시 QR 코드는 비활성화되며, 전체 화면의 **당겨서 새로고침(Pull-to-Refresh)** 액션을 통해 새로운 서버 시각과 QR 코드를 재발급 받는다.
+- Seat Domain은 `src/api/types -> src/api -> src/services -> src/hooks/queries -> src/components` 흐름을 따른다.
+- `src/api/seatApi.ts`는 Clicker API 호출을 담당하고 Sponge 암호화 User-Agent 규칙을 사용한다.
+- 좌석 상태, 열람실 목록, 좌석맵 HTML 파싱, 예약, 좌석 연장, 퇴실 흐름이 구현되어 있다.
+- iOS 비콘은 `modules/beacon-ranging`의 CoreLocation ranging을 사용한다.
+- Android 비콘은 `react-native-ble-plx`로 raw BLE manufacturer data를 파싱한다.
+- 현재 코드의 비콘 스캔 타임아웃은 20초다.
+- 실제 도서관 비콘/서버 회귀 검증은 후속 작업으로 남아 있다.
 
-### 3.3. 이용 중인 좌석 현황 관리
-- **표시 정보 (이용 중일 때)**:
-  - 장소 / 카테고리 (예: 제1열람실)
-  - 좌석 번호
-  - 현재 상태 뱃지와 시작 시각 / 종료 시각
-  - 남은 시간을 시각적으로 보여주는 **프로그레스 바 (Progress Bar)** 와 타임스탬프 (예: 01:42:10)
-- **표시 정보 (이용 중이 아닐 때 Empty State)**:
-  - "이용 중인 좌석이 없습니다" 문구 표출.
-  - **[좌석 예약하기]** 버튼 표시. (클릭 시 별도의 예약 화면(`feat/seat-reservation`)으로 넘어가도록 구현)
-- **주요 액션 (기능)**:
-  - **퇴실하기**: 즉각적인 퇴실 API 호출 후 홈 화면 데이터 리프레시.
-  - **연장하기**: 남은 시간 연장 API 호출 후 상태값 변경.
+### Loan
 
-### 3.4. 대출 현황 조회 및 연장 관리
-- **표시 정보 (홈 화면 Summary)**:
-  - 총 대출 중인 도서 권수 표기
-  - 최대 2~3개의 도서 리스트를 배열로 표시 (도서명, 반납일자, 남은 기한 D-Day 뱃지)
-- **주요 액션 (기능)**:
-  - 홈 화면의 **[도서 연장 신청하기]** 또는 **[전체보기 >]** 버튼을 누르면 **도서 전체 목록 화면**으로 이동한다.
-  - 리스트 뷰에서 각 항목 우측(또는 하단)에 물리적인 **[연장하기] 버튼**이 존재하여, 해당 책을 선택적으로 연장할 수 있도록 UX를 통일한다.
-  - 연장불가 사유(연체 등)가 있는 아이템은 버튼을 비활성화(Disabled) 처리한다.
+- 현재 기준 브랜치에는 `/MyLibrary` HTML 파싱, 홈 `LoanSummaryCard`, `app/loan-details.tsx` 목록/상세 UI가 있다.
+- 현재 기준 브랜치의 연장 버튼은 확인 다이얼로그까지만 있고 실제 API 호출부는 비어 있다.
+- `feat/loan-renewal` 브랜치에는 `/MyLibrary/Renewal/{bookId}` 기반 연장 API, mutation hook, 연장 다이얼로그, `BookCard` 분리가 구현되어 있다.
+- Loan을 "완료"로 판단하려면 `feat/loan-renewal` 병합/이식 후 타입 검사와 실제 성공/실패 메시지 검증이 필요하다.
 
-### 3.5. 글로벌 제어 (UX)
-- 홈 스크린 자체에 `RefreshControl`을 삽입하여, 위에서 아래로 당기는 스와이프 액션 발생 시 **모든 서버 데이터(QR 갱신, 좌석 현황 갱신, 도서 현황 갱신)**를 리패칭(Reloard)한다. React Query의 `refetch` 메서드를 적극 활용한다.
+## 4. 기술 스택
 
----
+- Expo SDK 55
+- Expo Router
+- React Native 0.83
+- React 19
+- TypeScript
+- Axios
+- `@tanstack/react-query`
+- `expo-secure-store`
+- `react-native-ble-plx`
+- `react-native-qrcode-svg`
+- `cheerio`
 
-## 4. 기술 스택 및 아키텍처 규칙
-- **프레임워크**: React Native + Expo SDK
-- **라우팅**: Expo Router (`app/` 폴더 기반)
-- **아키텍처**: Layered Architecture (`src/api`, `src/services`, `src/hooks`, `src/components`)
-- **데이터 패칭 및 캐싱**: `Axios` + `@tanstack/react-query`
-- **로컬 저장소**: `@react-native-async-storage/async-storage` (인증 세션 저장)
-- **Styling**: Standard React Native `StyleSheet` will be used for writing layout and UI styles, ensuring zero dependency overhead and robust performance.
+## 5. 데이터 모델 요약
 
----
-
-## 5. API 명세 (Server Endpoints)
-
-- **Base URL**: `https://lib.kangnam.ac.kr`
-- **Accept Header**: `application/json`
-
-| API | Method | Path | Query Params | Response |
-|---|---|---|---|---|
-| 사용자 인증 (SmartCard) | GET | `/Account/RequestClickerSmartCardInformation` | `l_user_id` (10자리 패딩), `l_user_pass` | `SmartCard` JSON |
-| 대출 도서 조회 | GET | `/MyLibrary` | `q=1`, `Userid` (10자리 패딩), `Userpass` | HTML (파싱 필요) |
-
----
-
-## 6. 데이터 모델 (Type Definitions)
-
-### SmartCard (서버 응답)
 ```typescript
-interface SmartCardResponse {
-  libtechAccountName: string;      // 이름
-  libtechAccountUserid: string;    // 학번
-  libtechAccountUseridQr: string;  // QR 식별자
-  libtechAccountDepart: string;    // 학부/학과
-  libtechAccountUniv: string;      // 단과대학
-}
-```
-
-### User (앱 내부 모델)
-```typescript
-interface User {
-  id: string;
+interface SmartCard {
   name: string;
-  studentId: string;     // 학번
-  department: string;    // 소속1 (학부/학과)
-  college: string;       // 소속2 (단과대학)
-  qrId?: string;         // QR 식별자
+  id: string;
+  qrId: string;
+  department: string;
+  college: string;
+  guid?: string;
 }
-```
 
-### Book (대출 도서)
-```typescript
 interface Book {
-  num: string;           // 번호
-  name: string;          // 도서명
-  rentalDate: string;    // 대출 일자
-  dueDate: string;       // 반납 예정일
-  returnedDate: string;  // 반납 일자
-  returnedStatus: string; // 반납 상태
-  renewable: string;     // 연장 가능 여부
-  renewCount: string;    // 연장 횟수
+  num: string;
+  name: string;
+  rentalDate: string;
+  dueDate: string;
+  returnedDate: string;
+  returnedStatus: string;
+  renewable: string;
+  renewCount: string;
 }
 ```
 
-*(End of Document)*
+`feat/loan-renewal` 병합 후에는 도서 연장 대상 식별용 `id` 필드가 필요하다.
+
+## 6. 우선순위
+
+1. `feat/loan-renewal` 병합/이식으로 Loan 연장 흐름 완성
+2. Seat API 암호화/파라미터 정책과 실제 서버 응답 재검증
+3. iOS/Android 실제 기기 비콘 회귀 검증
+4. Auth/User/QR 갱신 정책 문서화와 회귀 검증
+5. Expo dev client, 권한, 개인정보/배포 문서 정리

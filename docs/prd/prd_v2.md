@@ -31,7 +31,7 @@
 
 ### 3.1. 인증 및 로그인 (Auth Flow)
 - 홈 화면 진입 전, AuthGate를 통해 `AuthSession`을 확인하고 미인증 시 별도 로그인 화면으로 강제 이동한다.
-- 로그인 성공 시 사용자 인증 정보(id, pw 등)를 로컬(`SecureStore` 권장, 현재 `AsyncStorage` 활용)에 세션으로 저장한다.
+- 로그인 성공 시 사용자 인증 정보(id, pw 등)를 `expo-secure-store` 기반 로컬 보안 저장소에 세션으로 저장한다.
 
 ### 3.2. 학생 정보 & 출입 QR 코드 (User Domain)
 - **표시 정보**:
@@ -81,6 +81,7 @@
 - **라우팅**: Expo Router (`app/` 폴더 기반)
 - **아키텍처**: Strict Layered Architecture (`src/api/types` → `src/api` → `src/services` → `src/hooks` → `src/components`, `app/` 라우트 연결)
 - **데이터 패칭 및 캐싱**: `Axios` + `@tanstack/react-query`
+- **로컬 세션 저장소**: `expo-secure-store`
 - **뷰 구현 기법**:
   - **Styling**: Standard React Native `StyleSheet` (순수 React Native UI, Tailwind 미사용)
   - **HTML Scraping**: `cheerio` (백엔드 웹뷰 HTML 응답에서 위치 좌표 및 상태 추출하여 네이티브 구동 변환)

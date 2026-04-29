@@ -5,9 +5,9 @@
 - **BaseURL**: `https://lib.kangnam.ac.kr`
 - **Method**: All requests must use `GET`.
 - **Payload Location**: URL Query Parameters.
-- **Encryption Requirement**: A custom `Sponge` encryption algorithm is required **ONLY** for specific legacy endpoints.
-  - `GetMyInformation`: Requires Sponge encryption for both `userid` and `userpass`.
-  - All other seat reservation endpoints (Beacon, Action, Extend, Release) use **Plain Text** (URL-encoded) for ID and PW.
+- **Encryption Requirement**: Current app code applies custom `Sponge` encryption to user ID and password parameters for `GetMyInformation`, Beacon, Action, Extend, and Release calls.
+  - `src/api/seatApi.ts` uses `spongeEncrypt()` and URL-encodes the encrypted values.
+  - Older notes may mention mixed plaintext behavior; do not use those notes as the current implementation baseline.
 - **User-Agent Requirement**: Must match exact format to bypass WAF/Server blocks.
   - Format: `{Base_UA} spongeapp{App_Version} spongeandroid {SpongeEncrypt(Timestamp_yyyyMMddHHmmss)}`
 
@@ -95,7 +95,7 @@ Client must perform BLE scan or use mock location data.
 ```http
 GET /Beacon/DoClickerBeaconAction
   ?Uid=24ddf4118cf1440c87cde368daf9c93e
-  &UserId={PLAIN_ID}&UserPass={PLAIN_PW}
+  &UserId={SPONGE_URL_ENCODED_ID}&UserPass={SPONGE_URL_ENCODED_PW}
   &Name=RECO&Major=10001&Minor=103&Rssi=0
   &Wifi={SSID}&WifiMac={BSSID}
 ```
@@ -119,7 +119,7 @@ The client can bypass the WebView HTML and directly call the backend assignment 
 GET /Clicker/ReadingRoomAction
   ?ActionCode=0
   &SeatId={target_seat_id}
-  &UserId={PLAIN_ID}&UserPass={PLAIN_PW}
+  &UserId={SPONGE_URL_ENCODED_ID}&UserPass={SPONGE_URL_ENCODED_PW}
   &DeviceName=android&Kiosk=false
   &Guid={guid}&Wifi={SSID}&Scanner=&Geolocation=0
   &Beacon={auth_beacon_id_from_phase_3.2}&Eng=False
@@ -146,7 +146,7 @@ GET /Clicker/ReadingRoomAction
 ```http
 GET /Clicker/ExtendReadingSeat
   ?strId={seat_id_from_context}
-  &strUserId={PLAIN_ID}&strUserPass={PLAIN_PW}
+  &strUserId={SPONGE_URL_ENCODED_ID}&strUserPass={SPONGE_URL_ENCODED_PW}
   &strDeviceName=android&strKiosk=false
   &Wifi={SSID}&Scanner=&Beacon={auth_beacon_id_from_phase_3.2_or_empty}
 ```
@@ -173,7 +173,7 @@ Check `res.g_clicker_l_flag_repeat_cancel_seat` (from Phase 2).
 ```http
 GET /Clicker/ReleaseReadingSeat
   ?SeatId={seat_id_from_context}
-  &userid={PLAIN_ID}&userpass={PLAIN_PW}&devicename=android
+  &userid={SPONGE_URL_ENCODED_ID}&userpass={SPONGE_URL_ENCODED_PW}&devicename=android
 ```
 
 **[ Response ]**

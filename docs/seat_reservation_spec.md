@@ -11,9 +11,9 @@
 - **모든 API 방식**: `GET` (파라미터는 Query String으로 전달)
 - **응답 형식**: JSON (일부 페이지는 WebView용 HTML 반환)
 
-### 1.2 암호화 (Sponge Algorithm 및 Plain Text)
-- `GetMyInformation` 에서는 `userid`, `userpass`에 커스텀 `Sponge` 암호화가 필수입니다.
-- **그 외의 열람실 좌석 배정, 비콘, 연장, 반납 API**는 URL 인코딩된 **Plain Text (일반 텍스트)** 학번과 비밀번호를 전송해야 합니다.
+### 1.2 암호화 (Sponge Algorithm)
+- 현재 앱 구현은 `GetMyInformation`, 열람실 좌석 배정, 비콘, 연장, 반납 API의 사용자 식별자와 비밀번호에 커스텀 `Sponge` 암호화를 적용합니다.
+- 과거 원본 분석 문서에는 일부 API가 Plain Text라고 적힌 흔적이 있으나, 현재 `src/api/seatApi.ts`는 `spongeEncrypt()` 결과를 URL 인코딩해 전송합니다.
 
 ### 1.3 HTTP Headers (User-Agent)
 앱 구별 및 보안을 위해 특정 패턴의 User-Agent를 사용해야 합니다.
@@ -101,7 +101,7 @@ GET /Clicker/GetMyInformation
 *   **Method**: `GET`
 *   **URL**: `https://lib.kangnam.ac.kr/Beacon/DoClickerBeaconAction`
 *   **Query Parameters**:
-    *   `Uid` : 비콘 앱 기기 ID, `UserId` : 학번, `UserPass` : 비밀번호, `Name`=reco, `Major`=10001, `Minor`=103 (또는 구역코드), `Rssi`=0
+    *   `Uid` : 비콘 앱 기기 ID, `UserId` : Sponge 암호화 학번, `UserPass` : Sponge 암호화 비밀번호, `Name`=reco, `Major`=10001, `Minor`=103 (또는 구역코드), `Rssi`=0
 
 **[응답 형태 (JSON)]**
 비콘 인증 성공 여부와 검증 값을 반환합니다.
@@ -196,8 +196,8 @@ GET /Clicker/GetMyInformation
 ```http
 GET /Beacon/DoClickerBeaconAction
   ?Uid=24ddf4118cf1440c87cde368daf9c93e
-  &UserId={Plain_ID}
-  &UserPass={Plain_PW}
+  &UserId={Sponge_URL_Encoded_ID}
+  &UserPass={Sponge_URL_Encoded_PW}
   &Name=RECO
   &Major={major}
   &Minor={minor}
@@ -207,7 +207,8 @@ GET /Beacon/DoClickerBeaconAction
 ```
 **[ 응답 분기 처리 ]**
 * `l_communication_status` == "1": 성공. 응답의 `l_communication_beacon_id` 저장 후 다음 단계로 진행.
-* 실패하거나 타임아웃(10초) 발생 시 => **WiFi 인증으로 폴백 (Fallback)**
+* 실패하거나 타임아웃 발생 시 => **WiFi 인증으로 폴백 (Fallback)**
+  - 원본 앱 분석 기록은 10초였고, 현재 앱 구현은 `SCAN_TIMEOUT_MS = 20_000` 기준입니다.
   - 현재 연결된 도서관 WiFi IP가 서버에 등록된 IP 대역(`seatIpList`)에 속하는지 앱 내에서 검사. 일치 시 비콘 아이디 없이 다음 단계 진행.
 
 ### 3.3 좌석 배정 (ReadingRoomAction)
@@ -217,11 +218,11 @@ GET /Beacon/DoClickerBeaconAction
 GET /Clicker/ReadingRoomAction
   ?ActionCode=0
   &SeatId={target_seat_id}
-  &UserId={Plain_ID}
-  &UserPass={Plain_PW}
+  &UserId={Sponge_URL_Encoded_ID}
+  &UserPass={Sponge_URL_Encoded_PW}
   &DeviceName=android
   &Kiosk=false
-  &Guid={Plain_GUID}
+  &Guid={GUID}
   &Wifi={SSID_or_IP}
   &Scanner=
   &Geolocation=0
@@ -246,8 +247,8 @@ GET /Clicker/ReadingRoomAction
 ```http
 GET /Clicker/ReleaseReadingSeat
   ?SeatId={l_clicker_user_status_seat_id}
-  &userid={Plain_ID}
-  &userpass={Plain_PW}
+  &userid={Sponge_URL_Encoded_ID}
+  &userpass={Sponge_URL_Encoded_PW}
   &devicename=android
 ```
 
@@ -262,8 +263,8 @@ GET /Clicker/ReleaseReadingSeat
 ```http
 GET /Clicker/ExtendReadingSeat
   ?strId={l_clicker_user_status_seat_id}
-  &strUserId={Plain_ID}
-  &strUserPass={Plain_PW}
+  &strUserId={Sponge_URL_Encoded_ID}
+  &strUserPass={Sponge_URL_Encoded_PW}
   &strDeviceName=android
   &strKiosk=false
   &Wifi={SSID_or_IP}

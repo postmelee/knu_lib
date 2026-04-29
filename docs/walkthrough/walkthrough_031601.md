@@ -50,13 +50,13 @@ enc_id = sponge_encrypt(USER_ID)      # ← Sponge 암호화
 enc_pw = url_encode(sponge_encrypt(USER_PASS))
 ```
 
-하지만 우리 [seatApi.ts:78-80](file:///Users/melee/Documents/KNU_library/src/api/seatApi.ts#L78-L80)에서는:
+과거 구현에서는 다음처럼 인증값을 그대로 URL 인코딩하는 코드가 있었다:
 ```typescript
-const plainId = encodeURIComponent(id);   // ← 평문!
-const plainPw = encodeURIComponent(pw);   // ← 평문!
+const encodedId = encodeURIComponent(id);
+const encodedPw = encodeURIComponent(pw);
 ```
 
-동일하게 `reserveSeat`, `extendSeat`, `releaseSeat`도 **Python 참조는 Sponge 암호화를 적용**하지만, 우리 코드는 평문(plaintext)을 보내고 있습니다. 현재 서버가 두 방식 모두 수용하고 있을 수는 있지만, 일관성과 안정성을 위해 Python 참조와 동일하게 맞추는 것이 안전합니다.
+현재 코드의 `reserveSeat`, `extendSeat`, `releaseSeat`, `doBeaconAction`은 Python 참조와 동일한 방향으로 `spongeEncrypt()`를 적용합니다. 이 문서의 초기 지적은 과거 구현 상태에 대한 기록이며, 현재 기준에서는 해결된 항목입니다.
 
 ---
 
@@ -124,6 +124,6 @@ Python 참조 코드에서는 현재 이용 중인 좌석의 `seat_id`를 명확
 | 🔴 2 | Beacon/Reserve/Extend/Release API에 Sponge 암호화 적용 | API 안정성 |
 | 🟡 3 | 인증 정보 주입 방식 통일 (Service 내부 주입으로) | 코드 일관성 |
 | 🟡 4 | `parseTimeString` 등 유틸 함수를 Service/Utils로 이동 | 아키텍처 |
-| 🟡 5 | `seatId`를 extend/release에 올바르게 전달 | 명세 준수 |
+| 🟡 5 | `seatId`를 extend/release에 올바르게 전달 | 현재 `src/services/seatService.ts`는 상태 조회 캐시의 seatId를 사용 |
 | 🟢 6 | SeatReservationScreen 한국어화 | UX 일관성 |
 | 🟢 7 | `GetMyInfoResponse` 타입 확장 | 타입 안전성 |
