@@ -21,6 +21,7 @@ GitHub Issue: https://github.com/postmelee/knu_lib/issues/7
 | EAS production build | `autoIncrement: true` | 제출 빌드 번호 관리 가능 |
 | EAS submit profile | `production: {}` | `ascAppId`는 App Store Connect 앱 생성 후 추가 필요 |
 | 개인정보처리방침 | `docs/privacy_policy.md` 존재 | App Store Connect에 공개 URL 필요 |
+| App Store 문안 | `mydocs/tech/ios_app_store_metadata_20260430.md` 작성 | 제품 설명, 심사 노트, 개인정보 설문 초안 준비 |
 
 ## 로컬 검증 결과
 
@@ -42,6 +43,7 @@ GitHub Issue: https://github.com/postmelee/knu_lib/issues/7
 | 지원 URL 준비 | 배포자 | App Store Connect 메타데이터에 필요할 수 있음 |
 | 스크린샷 준비 | 배포자 | iPhone 필수 해상도 세트 준비 |
 | 개인정보 설문 작성 | 배포자 | 학생 인증정보, 위치, Bluetooth 사용 목적을 정확히 기재 |
+| App Review Notes 작성 | 배포자 | 비공식 앱, 심사용 계정, 비콘 현장 제약 설명 |
 
 ## EAS 명령
 
@@ -81,6 +83,16 @@ eas build --platform ios --profile production --auto-submit
 | 위치/블루투스 권한 | 비콘 인증에 위치/BLE 권한 필요 | 열람실 좌석 예약/연장/퇴실 인증 목적을 권한 문구와 심사 노트에 명시 |
 | 외부 서버 의존 | `https://lib.kangnam.ac.kr`에 직접 접근 | 사용자 계정으로 도서관 웹 서비스를 이용하는 클라이언트임을 설명 |
 | 현장 기능 | 비콘 인증은 도서관 현장에서만 완전 검증 가능 | 심사용 계정, 기능 설명, 제한 상황을 App Review Notes에 제공 |
+
+## 제출 문안 산출물
+
+`mydocs/tech/ios_app_store_metadata_20260430.md`에 다음 초안을 작성했다.
+
+- 제품 페이지 설명, 부제, 키워드, 릴리스 노트
+- 비공식 앱 고지와 심사용 계정 안내가 포함된 App Review Notes
+- App Privacy 설문 초안
+- 암호화/수출 규정 확인 항목
+- 스크린샷 촬영 계획
 
 ## iOS 실기기 회귀 검증
 
