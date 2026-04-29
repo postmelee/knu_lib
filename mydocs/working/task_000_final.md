@@ -37,6 +37,6 @@ KNU Library 저장소에 `mydocs` 기반 Hyper-Waterfall 운영 체계를 시작
 
 ## 남은 작업
 
-1. #5에서 `feat/loan-renewal`의 Loan 연장 구현을 현재 브랜치로 병합/이식한다.
+1. #5에서 현재 코드에 반영된 Loan 연장 구현을 실제 서버 기준으로 회귀 검증한다.
 2. #4에서 Seat/Beacon 실제 기기 검증 절차를 분리한다.
 3. 추적 후보 `docs/*.md`의 실제 커밋 포함 여부를 다음 PR 범위에서 확정한다.

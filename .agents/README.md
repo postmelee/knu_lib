@@ -16,4 +16,4 @@
 - 인증 저장소는 `SecureStore` 기준으로 쓴다.
 - 비콘 타임아웃은 현재 코드의 `SCAN_TIMEOUT_MS = 20_000` 기준으로 쓴다.
 - Seat API 자격 증명은 Sponge 암호화 기준으로 쓴다.
-- Loan 연장 API 상태는 `feat/loan-renewal` 병합 여부를 분리해서 기록한다.
+- Loan 연장 API는 현재 코드 반영 기준으로 기록하고, 실제 서버 검증 여부만 분리해서 기록한다.

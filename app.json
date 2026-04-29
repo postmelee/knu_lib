@@ -47,13 +47,6 @@
     },
     "plugins": [
       "expo-router",
-      [
-        "react-native-ble-plx",
-        {
-          "isBackgroundEnabled": false,
-          "neverForLocation": false
-        }
-      ],
       "expo-secure-store"
     ],
     "updates": {

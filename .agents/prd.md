@@ -20,7 +20,7 @@
 | 홈 대시보드 | `app/(tabs)/index.tsx` | 구현됨 |
 | 열람실 목록 | `app/(tabs)/rooms.tsx` | 구현됨 |
 | 좌석 예약/조회 | `app/(tabs)/seat-reservation.tsx` | 구현됨 |
-| 대출 상세 | `app/loan-details.tsx` | 목록/상세 UI 구현, 도서 연장 호출은 현재 기준 브랜치 미반영 |
+| 대출 상세 | `app/loan-details.tsx` | 목록/상세 UI와 도서 연장 호출 구현됨 |
 
 ## 3. 도메인 요구사항
 
@@ -37,17 +37,16 @@
 - Seat Domain은 `src/api/types -> src/api -> src/services -> src/hooks/queries -> src/components` 흐름을 따른다.
 - `src/api/seatApi.ts`는 Clicker API 호출을 담당하고 Sponge 암호화 User-Agent 규칙을 사용한다.
 - 좌석 상태, 열람실 목록, 좌석맵 HTML 파싱, 예약, 좌석 연장, 퇴실 흐름이 구현되어 있다.
-- iOS 비콘은 `modules/beacon-ranging`의 CoreLocation ranging을 사용한다.
-- Android 비콘은 `react-native-ble-plx`로 raw BLE manufacturer data를 파싱한다.
+- 비콘은 `modules/beacon-ranging` 로컬 Expo 네이티브 모듈을 사용한다.
+- iOS는 CoreLocation ranging, Android는 BluetoothLeScanner 기반 네이티브 iBeacon 파싱을 사용한다.
 - 현재 코드의 비콘 스캔 타임아웃은 20초다.
 - 실제 도서관 비콘/서버 회귀 검증은 후속 작업으로 남아 있다.
 
 ### Loan
 
-- 현재 기준 브랜치에는 `/MyLibrary` HTML 파싱, 홈 `LoanSummaryCard`, `app/loan-details.tsx` 목록/상세 UI가 있다.
-- 현재 기준 브랜치의 연장 버튼은 확인 다이얼로그까지만 있고 실제 API 호출부는 비어 있다.
-- `feat/loan-renewal` 브랜치에는 `/MyLibrary/Renewal/{bookId}` 기반 연장 API, mutation hook, 연장 다이얼로그, `BookCard` 분리가 구현되어 있다.
-- Loan을 "완료"로 판단하려면 `feat/loan-renewal` 병합/이식 후 타입 검사와 실제 성공/실패 메시지 검증이 필요하다.
+- `/MyLibrary` HTML 파싱, 홈 `LoanSummaryCard`, `app/loan-details.tsx` 목록/상세 UI가 구현되어 있다.
+- `/MyLibrary/Renewal/{bookId}` 기반 연장 API, mutation hook, 연장 다이얼로그, `BookCard` 분리가 현재 코드에 반영되어 있다.
+- Loan을 운영 완료로 판단하려면 실제 계정/서버에서 성공·실패 메시지 회귀 검증이 필요하다.
 
 ## 4. 기술 스택
 
@@ -59,7 +58,6 @@
 - Axios
 - `@tanstack/react-query`
 - `expo-secure-store`
-- `react-native-ble-plx`
 - `react-native-qrcode-svg`
 - `cheerio`
 
@@ -87,12 +85,12 @@ interface Book {
 }
 ```
 
-`feat/loan-renewal` 병합 후에는 도서 연장 대상 식별용 `id` 필드가 필요하다.
+도서 연장 대상 식별을 위해 `Book.id`를 사용한다.
 
 ## 6. 우선순위
 
-1. `feat/loan-renewal` 병합/이식으로 Loan 연장 흐름 완성
-2. Seat API 암호화/파라미터 정책과 실제 서버 응답 재검증
-3. iOS/Android 실제 기기 비콘 회귀 검증
+1. Seat API 암호화/파라미터 정책과 실제 서버 응답 재검증
+2. iOS/Android 실제 기기 비콘 회귀 검증
+3. Loan 연장 성공·실패 메시지 실제 서버 회귀 검증
 4. Auth/User/QR 갱신 정책 문서화와 회귀 검증
 5. Expo dev client, 권한, 개인정보/배포 문서 정리
