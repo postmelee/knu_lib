@@ -23,12 +23,15 @@ mydocs/
 ├── working/          # 단계별 완료 보고서와 최종 결과 보고서.
 ├── report/           # 프로젝트 현황, 기준선, 릴리즈 보고서.
 ├── feedback/         # 코드 리뷰 피드백과 후속 조치.
+├── skills/           # 명시 호출형 하이퍼-워터폴 SKILL 절차.
 ├── tech/             # API, 암호화, 비콘, 파싱 등 기술 문서.
 ├── manual/           # 운영 규칙과 개발 가이드.
 └── troubleshootings/ # 실패 원인, 재현 절차, 해결 기록.
 ```
 
 기존 `docs/`는 선별한 Markdown 조사 자료와 과거 산출물 보관소로 유지한다. 새 개발 프로세스 기록은 `mydocs/`에 남긴다. 원본 로그, APK, 캡처, 참조 Python은 Git 추적 대상이 아니며 현재 정리 완료 상태다.
+
+`.agents/skills`는 `../mydocs/skills`를 가리키는 심볼릭 링크다. 실제 skill 본문은 `mydocs/skills/*/SKILL.md`에 있고, 모든 skill은 명시 호출 또는 단계 승인 후에만 적용한다.
 
 ## 마일스톤
 
@@ -74,3 +77,5 @@ mydocs/
 
 - `mydocs/manual/agent_code_hyperfall_rule_conflict.md`: 에이전트 기본 동작과 하이퍼-워터폴 충돌 처리 기준
 - `mydocs/manual/task_workflow_guide.md`: 타스크 진행 절차, 승인 간주 조건, 커밋/브랜치 규칙 기준
+- `mydocs/manual/git_workflow_guide.md`: 브랜치 정책, PR 게시, merge, cleanup 기준
+- `mydocs/skills/`: 하이퍼-워터폴 명시 호출용 Agent Skill 모음
