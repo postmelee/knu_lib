@@ -69,6 +69,8 @@
 
 ## SKILL 호출 표시 안내
 
+하이퍼-워터폴 SKILL 절차는 `mydocs/skills/*/SKILL.md`에 둔다. `.agents/skills`는 `../mydocs/skills`를 가리키는 심볼릭 링크다.
+
 하이퍼-워터폴 SKILL 절차를 적용할 때는 실제 절차 실행 전에 사용자에게 한 줄로 알린다. 이는 묵시 호출을 허용한다는 뜻이 아니라, 작업지시자의 명시 지시나 단계 승인에 따라 해당 절차를 적용한다는 사실을 투명하게 표시하는 안내다.
 
 권장 형식:
@@ -87,3 +89,4 @@
 - `document_structure_guide.md`: 수행계획서, 단계 보고서, 최종 보고서 위치와 파일명.
 - `git_workflow_guide.md`: `local/taskN`, `publish/taskN`, `devel`, `master` 브랜치 운용, PR 게시, merge, cleanup.
 - `agent_code_hyperfall_rule_conflict.md`: 하이퍼-워터폴 규칙과 에이전트 기본 동작이 충돌하는 지점.
+- `mydocs/skills/`: `task-register`, `task-start`, `task-stage-report`, `task-final-report`, `pr-merge-cleanup`, `external-pr-review` 실행 절차.
