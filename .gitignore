@@ -49,3 +49,8 @@ gemini/
 
 # Docs
 _gemini/
+docs/build-*.apk
+docs/*.txt
+docs/mitlogs/
+docs/capture/
+docs/knulib_api*.py
