@@ -19,6 +19,7 @@
 
 - 운영 규칙: `mydocs/manual/hyper_waterfall_knu_library.md`
 - 현재 기준선: `mydocs/report/current_state_baseline_20260429.md`
+- 앱 상태 보고: `mydocs/report/app_status_20260429.md`
 - GitHub 초기 설정: `mydocs/report/github_setup_20260429.md`
 - docs 추적 정책: `mydocs/report/docs_tracking_policy_20260429.md`
 - 기존 문서 인벤토리: `mydocs/tech/docs_inventory_20260429.md`

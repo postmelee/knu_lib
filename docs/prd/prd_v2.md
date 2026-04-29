@@ -23,7 +23,7 @@
    - `roomId`, `roomName`, `requireBeacon`의 파라미터를 수신.
    - Beacon(비콘) 인증 요구 시 백그라운드에서 임시 토큰 취득.
    - HTML 2D Map 파싱 데이터를 기반으로 네이티브 타일 뷰 노출 및 선택 시 최종 예약 수행.
-6. **전체 대출 상세 화면 (`app/loan-details.tsx`)**: 전체 대출 목록 및 연장 처리 화면. (추후 구현)
+6. **전체 대출 상세 화면 (`app/loan-details.tsx`)**: 전체 대출 목록 및 연장 처리 화면. 현재 브랜치에는 목록/상세 UI가 있고, 연장 API 구현은 `feat/loan-renewal` 브랜치에 완료되어 있어 병합/검증이 필요합니다.
 
 ---
 
@@ -57,10 +57,14 @@
   - **퇴실하기 (`useReleaseSeat`)**: 즉각적인 퇴실 API 호출 후 홈 화면 데이터 리프레시(`invalidateQueries`).
   - **연장하기 (`useExtendSeat`)**: 남은 시간 연장 API 호출 후 상태값 변경.
 
-### 3.4. 대출 현황 조회 및 연장 관리 (Loan Domain) *(예정 단계)*
+### 3.4. 대출 현황 조회 및 연장 관리 (Loan Domain)
 - **표시 정보 (홈 화면 Summary - `LoanSummaryCard.tsx`)**:
   - 총 대출 중인 도서 권수 표기
   - 최대 2~3개의 도서 리스트 표시 (도서명, 반납일자, 남은 기한 D-Day 뱃지)
+- **현재 구현 상태**:
+  - 현재 브랜치: `/MyLibrary` HTML 파싱 기반 대출 목록, 홈 요약 카드, 전체 대출 상세 화면 구현.
+  - `feat/loan-renewal` 브랜치: `/MyLibrary/Renewal/{bookId}` 기반 도서 연장 API, mutation hook, 연장 다이얼로그 구현 완료.
+  - 남은 작업: `feat/loan-renewal` 변경 병합/이식 후 현재 브랜치에서 타입 검사와 수동 회귀 검증.
 - **주요 기능 아키텍처**: Seat Domain과 동일하게 `types`, `api`, `service`, `hook` 분리 원칙 고수.
 - **주요 액션 (기능)**:
   - 홈 화면의 **[도서 연장 신청하기]** 또는 **전체보기** 버튼을 누르면 **도서 전체 목록 화면(`app/loan-details.tsx`)**으로 이동.

@@ -1,137 +1,107 @@
-# 📚 KNU Library App — 프로젝트 현황 보고서
+# KNU Library App - 프로젝트 현황 보고서
 
-> 작성일: 2026-03-16 | 버전: v0.2.0 (Seat Domain 완성)
-
----
+> 작성일: 2026-04-29 | 기준 브랜치: `refactor/ui-cleanup` | 상태: Hyper-Waterfall 전환 후 기준선 갱신
 
 ## 1. 프로젝트 개요
 
-강남대학교 도서관 앱으로, 학생증 QR 출입, 좌석 예약/관리, 도서 대출 현황을 **단일 네이티브 앱**으로 제공합니다.
+강남대학교 도서관 앱은 학생증 QR 출입, 열람실 좌석 예약/관리, 대출 현황 조회를 단일 네이티브 앱에서 제공한다. 현재 앱은 React Native + Expo 기반이며, 실제 강남대 도서관/Clicker 계열 API를 직접 호출한다.
 
 | 항목 | 내용 |
 |---|---|
 | 프레임워크 | React Native + Expo SDK 55 |
-| 라우팅 | Expo Router (파일 기반) |
-| 상태관리 | @tanstack/react-query v5 |
+| 라우팅 | Expo Router |
+| 상태관리 | `@tanstack/react-query` |
 | HTTP 클라이언트 | Axios |
-| 스타일링 | React Native StyleSheet |
+| 로컬 세션 | `expo-secure-store` |
+| 네이티브 기능 | iOS CoreLocation 비콘 모듈, Android BLE scan |
 | 언어 | TypeScript |
 
----
+## 2. 현재 도메인별 구현 상태
 
-## 2. 아키텍처
-
-Strict Layered Architecture를 따릅니다:
-
-```
-src/api/types/   → 타입 정의
-src/api/         → 순수 HTTP 호출 (Axios)
-src/services/    → 비즈니스 로직 (파싱, 상태 결정, 인증 주입)
-src/hooks/       → React Query 훅 (Thin Hook)
-src/components/  → 프레젠테이션 컴포넌트
-src/screens/     → 화면 컴포넌트
-app/             → Expo Router 라우트
-```
-
-### 도메인별 구현 상태
-
-| 도메인 | Types | API | Service | Hooks | UI | 상태 |
+| 도메인 | Types | API | Service | Hooks | UI | 현재 상태 |
 |---|---|---|---|---|---|---|
-| Auth | ✅ | ✅ | ✅ | ✅ | ✅ | **완성** |
-| User | ✅ | ✅ | ✅ | ✅ | ✅ | **완성** |
-| Seat | ✅ | ✅ | ✅ | ✅ | ✅ | **완성** |
-| Loan | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | **미완성** |
+| Auth | 완료 | 완료 | 완료 | 완료 | 완료 | 구현됨 |
+| User/QR | 완료 | 완료 | 완료 | 완료 | 완료 | 구현됨 |
+| Seat | 완료 | 완료 | 완료 | 완료 | 완료 | 구현됨, 실제 회귀 검증 필요 |
+| Beacon | 부분 | 해당 없음 | 완료 | Seat Hook 통합 | 완료 | 구현됨, 실제 기기 검증 필요 |
+| Loan | 부분 | 목록 완료, 연장 브랜치 존재 | 목록 완료, 연장 브랜치 존재 | 목록 완료, 연장 브랜치 존재 | 상세 UI 완료 | 현재 브랜치 미반영분 있음 |
 
----
+## 3. Loan Domain 정확한 상태
 
-## 3. 라우팅 구조
+Loan 연장 API는 사용자의 기억처럼 **구현 완료 브랜치가 존재한다**. 다만 현재 작업 브랜치 `refactor/ui-cleanup`에는 아직 병합되어 있지 않다.
 
+| 기준 | 상태 |
+|---|---|
+| 현재 브랜치 `refactor/ui-cleanup` | 대출 목록 파싱, 요약 카드, 상세 화면, 연장 버튼 UI까지 존재. 실제 연장 API 호출은 `/* extend API */` 주석으로 비어 있음. |
+| 브랜치 `feat/loan-renewal` | 커밋 `21ea378 feat(loan): 도서 연장 기능 구현 및 Clean Architecture 리팩토링`에 실제 연장 구현 존재. |
+
+`feat/loan-renewal`의 핵심 변경 파일:
+
+```text
+app/loan-details.tsx
+src/api/types/book.ts
+src/components/BookCard.tsx
+src/hooks/queries/useLoan.ts
+src/services/loanService.ts
 ```
+
+따라서 최신 판단은 다음과 같다.
+
+- Loan 목록/상세: 현재 브랜치에 반영됨
+- Loan 연장 API: 구현 완료 브랜치 존재
+- 현재 앱 반영: 미완료, 병합/이식 필요
+
+## 4. 라우팅 구조
+
+```text
 app/
-├── _layout.tsx              # AuthGate (인증 분기)
+├── _layout.tsx              # AuthGate, QueryClientProvider, Stack
 ├── login.tsx                # 로그인 화면
-├── loan-details.tsx         # 대출 상세 (미완성)
+├── loan-details.tsx         # 대출 상세 화면
 └── (tabs)/
     ├── _layout.tsx          # 탭 네비게이션
-    ├── index.tsx            # 홈 대시보드 (QR, 좌석, 대출 요약)
-    ├── rooms.tsx            # 열람실 목록
-    └── seat-reservation.tsx # 좌석 선택 맵
+    ├── index.tsx            # 홈 대시보드
+    ├── rooms.tsx            # 열람실 목록 라우트
+    └── seat-reservation.tsx # 좌석 선택/예약 라우트
 ```
 
----
+## 5. 주요 구현 내용
 
-## 4. Seat Domain 상세 구현 현황
+### Auth/User/QR
 
-### 4.1. API 계층 (`src/api/seatApi.ts`)
+- 로그인은 `GetMyinformation?login=true`로 유효성을 검증한 뒤 SmartCard API를 호출한다.
+- 세션은 `expo-secure-store`에 저장한다.
+- `AuthGate`가 세션 존재 여부에 따라 로그인/홈 라우팅을 제어한다.
+- `StudentCard`는 SmartCard 기반 이름, 학번, 소속, QR을 표시한다.
+- QR 갱신은 `fetchQrId()`로 QR ID만 다시 가져와 React Query 캐시를 갱신한다.
 
-| 엔드포인트 | 함수명 | 암호화 | 상태 |
-|---|---|---|---|
-| `GetMyInformation` | `getMyInformation()` | Sponge | ✅ |
-| `GetClickerReadingRooms` | `getReadingRooms()` | 없음 | ✅ |
-| `UserSeatMobile/{roomId}` | `getReadingRoomSeatsHTML()` | Sponge | ✅ |
-| `DoClickerBeaconAction` | `doBeaconAction()` | Sponge | ✅ |
-| `ReadingRoomAction` | `reserveSeat()` | Sponge | ✅ |
-| `ExtendReadingSeat` | `extendSeat()` | Sponge | ✅ |
-| `ReleaseReadingSeat` | `releaseSeat()` | Sponge | ✅ |
+### Seat/Beacon
 
-### 4.2. 서비스 계층 (`src/services/seatService.ts`)
+- Seat 상태 조회, 열람실 목록, 좌석 HTML 파싱, 예약, 연장, 퇴실 흐름이 구현되어 있다.
+- iOS는 `modules/beacon-ranging`의 CoreLocation 기반 네이티브 모듈로 iBeacon ranging을 수행한다.
+- Android는 `react-native-ble-plx`와 manufacturer data 파싱으로 iBeacon을 탐색한다.
+- 실제 도서관 비콘/서버 회귀 검증은 아직 별도 작업으로 남아 있다.
 
-- `fetchSeatStatus()`: 인증 자동 주입 → `GetMyInformation` 호출 → `UserState` 판별
-- `fetchAndParseRoomSeats(roomId)`: 인증 자동 주입 → HTML 파싱 → `ParsedSeat[]` 반환
-- `authenticateBeacon()`: 위치 인증
-- `requestSeatReservation(seatId, beaconId)`: 좌석 예약
-- `requestSeatExtension(seatId, beaconId)`: 좌석 연장
-- `requestSeatRelease(seatId)`: 좌석 퇴실
+### Loan
 
-모든 Service 함수는 내부 `getCredentials()` 헬퍼를 통해 `AsyncStorage`에서 인증 정보를 자동 주입합니다.
+- `src/services/loanService.ts`가 `/MyLibrary` HTML을 파싱해 대출 도서를 가져온다.
+- `LoanSummaryCard`와 `app/loan-details.tsx`가 실제 대출 데이터를 사용한다.
+- 현재 브랜치의 연장 버튼은 실제 API를 호출하지 않는다.
+- `feat/loan-renewal` 구현을 현재 브랜치로 병합/이식해야 한다.
 
-### 4.3. 상태 머신 (`UserState`)
+## 6. 검증 결과
 
-```
-l_communication_status !== "0"  →  UNAUTHORIZED (인증 실패)
-l_communication_status === "0"  →  인증 성공:
-  ├── seat_id 없음              →  IDLE (빈자리)
-  ├── seat_id 있음 + open "1"   →  SEATED (이용 중)
-  └── seat_id 있음 + open "0"   →  AWAY (자리비움)
-```
+| 검증 | 결과 |
+|---|---|
+| `npx tsc --noEmit` | 통과 |
+| 현재 브랜치에 `feat/loan-renewal` 포함 여부 | 미포함 |
+| `docs/` 원본 로그/APK/캡처 정리 | 완료, Markdown만 보존 |
 
-> ⚠️ `l_communication_status === "0"`이 **성공**을 의미합니다 (직관과 반대).
+## 7. 다음 작업
 
-### 4.4. 암호화 (`src/utils/crypto.ts`)
-
-`knulib_api.py`의 Sponge 암호화 역공학 구현을 TypeScript로 이식:
-- 입력 문자열 역순 변환
-- 각 문자마다 랜덤 위치의 패딩 삽입 (짝수: 3자, 홀수: 2자)
-- `SPONGE_START` / `SPONGE_STOP` 래핑
-
-### 4.5. 시간 처리 (`src/utils/dateUtils.ts`)
-
-API 시간 형식: `"20260316142740"` (yyyyMMddHHmmss)
-- `parseTimeString()`: 14자리 → Date 객체
-- `formatHHMM()`: Date → "HH:MM"
-- `formatRemaining()`: ms → "H시간 MM분"
-
----
-
-## 5. 해결된 버그 이력
-
-| 버그 | 원인 | 수정 | 관련 파일 |
-|---|---|---|---|
-| Session Expired 오류 | `l_communication_status === "0"`을 실패로 판별 | `!== "0"`으로 조건 반전 | `seatService.ts` |
-| 서버 인증 거부 | `spongeEncrypt`가 mock(base64) | 실제 알고리즘 이식 | `crypto.ts` |
-| 시간/프로그레스바 미표시 | API가 `yyyyMMddHHmmss` 형식인데 ISO로 파싱 | 14자리 직접 파싱 | `dateUtils.ts` |
-| Beacon/Reserve API 인증 불일치 | plaintext 전송 | Sponge 암호화 적용 | `seatApi.ts` |
-| extend/release에 seatId 누락 | 빈 문자열 전달 | React Query 캐시에서 조회 | `useSeat.ts` |
-
----
-
-## 6. 남은 작업 (Roadmap)
-
-| 우선순위 | 작업 | 설명 |
-|---|---|---|
-| 🔴 높음 | Loan Domain 구현 | types → api → service → hook → UI 전체 파이프라인 |
-| 🔴 높음 | expo-dev-client 도입 | Beacon BLE 스캔 등 네이티브 기능 대응 |
-| 🟡 중간 | 프로그레스바 색상 변화 | 잔여 시간 < 30분 시 경고색 |
-| 🟡 중간 | Pull-to-Refresh 연동 강화 | 전체 쿼리 invalidation 확인 |
-| 🟢 낮음 | SecureStore 마이그레이션 | AsyncStorage → expo-secure-store |
-| 🟢 낮음 | 에러 바운더리 | 전역 에러 핸들링 |
+| 우선순위 | Issue | 작업 |
+|---|---:|---|
+| 높음 | #5 | `feat/loan-renewal`의 Loan 연장 구현을 현재 브랜치에 병합/이식 |
+| 높음 | #4 | Seat API 암호화/파라미터 정책과 실제 기기 비콘 검증 |
+| 중간 | #3 | Auth/User/QR 회귀 검증과 QR 만료/갱신 정책 정리 |
+| 중간 | #2 | Expo dev client 빌드/권한/배포 품질 관문 정리 |
