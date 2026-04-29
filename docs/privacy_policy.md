@@ -50,6 +50,10 @@
 - **블루투스(Bluetooth) 권한**: 도서관 내에 설치된 비콘 센서 탐지를 위함
 - **위치 정보(Location) 권한**: (주로 안드로이드 단말기에서) 블루투스 LE 모듈을 기반으로 비콘 신호를 스캔하기 위해 필요
 
+현재 앱 설정 기준 권한은 다음과 같습니다:
+- iOS: `NSBluetoothAlwaysUsageDescription`, `NSLocationWhenInUseUsageDescription`
+- Android: `BLUETOOTH_SCAN`, `BLUETOOTH_CONNECT`, `ACCESS_FINE_LOCATION`, `BLUETOOTH`, `BLUETOOTH_ADMIN`
+
 해당 권한을 거부하더라도 앱의 '열람실 조회' 및 '대출 내역 확인' 등 기본 기능은 제한 없이 사용할 수 있으나, **'좌석 예약' 및 '연장/반납'** 기능 사용은 제한됩니다.
 
 ---
@@ -74,3 +78,4 @@
 
 > **변경 이력**
 > - 2026. 03. 23. 개인정보처리방침 최초 작성 및 시행
+> - 2026. 04. 30. iOS/Android 비콘 권한 항목과 로그 미보관 정책 점검

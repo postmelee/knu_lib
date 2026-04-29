@@ -60,6 +60,7 @@
 | `npx expo-modules-autolinking resolve --platform android` | `beacon-ranging` Android module 확인 |
 | `./gradlew :app:assembleDebug` | 통과 |
 | `docs/` 원본 로그/APK/캡처 정리 | 완료, Markdown만 보존 |
+| M050 배포 품질 관문 | `mydocs/tech/release_quality_gate_20260430.md`에 정리. Expo SDK patch mismatch는 릴리즈 전 차단 항목 |
 
 ## 5. 다음 작업
 
@@ -68,4 +69,3 @@
 | 높음 | #4 | Android 실제 기기 비콘 검증과 Seat API 실제 서버 회귀 검증 |
 | 높음 | #5 | Loan 연장 성공/실패 메시지와 목록 갱신 실제 서버 검증 |
 | 중간 | #3 | Auth/User/QR 회귀 검증과 QR 만료/갱신 정책 정리 |
-| 중간 | #2 | Expo dev client 빌드/권한/배포 품질 관문 정리 |
