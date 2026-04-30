@@ -34,6 +34,8 @@ export const SeatReservationScreen: React.FC = () => {
   const autoBeacon = useAutoBeaconAuth(isBeaconRequired && isBeaconPermissionReady);
   
   const { data: seats, isLoading: isSeatsLoading } = useReadingRoomSeats(roomId);
+  const isBeaconChecking = isBeaconRequired && (isPreparingBeaconPermission || autoBeacon.isLoading);
+  const isBeaconViewOnly = isBeaconRequired && autoBeacon.isError;
 
   const prepareBeaconPermission = useCallback(async () => {
     if (!isBeaconRequired) {
@@ -80,13 +82,13 @@ export const SeatReservationScreen: React.FC = () => {
       Alert.alert(
         "도서관 밖이신가요?", 
         autoBeacon.error?.message || "위치 인증에 실패했습니다. 열람실 안에서 다시 시도해주세요.",
-        [{ text: "뒤로 가기", onPress: () => router.back() }]
+        [{ text: "확인" }]
       );
     }
-  }, [autoBeacon.isError, autoBeacon.error, router]);
+  }, [autoBeacon.isError, autoBeacon.error]);
 
   const handleSeatPress = useCallback((seat: ParsedSeat) => {
-      if (isBeaconRequired && (isPreparingBeaconPermission || autoBeacon.isLoading)) {
+      if (isBeaconChecking) {
           Alert.alert("인증 진행 중", "도서관 위치를 확인하고 있습니다. 잠시만 기다려주세요.");
           return;
       }
@@ -95,7 +97,7 @@ export const SeatReservationScreen: React.FC = () => {
           return;
       }
       setSelectedSeat(seat);
-  }, [isBeaconRequired, isPreparingBeaconPermission, autoBeacon.isLoading, autoBeacon.isError]);
+  }, [isBeaconChecking]);
 
   const handleReservation = () => {
     if (!selectedSeat) {
@@ -159,7 +161,7 @@ export const SeatReservationScreen: React.FC = () => {
   };
 
   const isButtonDisabled = () => {
-    if (isBeaconRequired && (isPreparingBeaconPermission || autoBeacon.isLoading || autoBeacon.isError)) return true;
+    if (isBeaconChecking || isBeaconViewOnly) return true;
     if (!selectedSeat) return true;
     if (reserveMutation.isPending) return true;
     return false;
@@ -227,7 +229,7 @@ export const SeatReservationScreen: React.FC = () => {
                       size="xlarge"
                       onPress={handleReservation} 
                       disabled={isButtonDisabled()}
-                      loading={reserveMutation.isPending || (isBeaconRequired && (isPreparingBeaconPermission || autoBeacon.isLoading))}
+                      loading={reserveMutation.isPending || isBeaconChecking}
                   >
                       {getButtonText()}
                   </Button>
