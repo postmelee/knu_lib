@@ -104,6 +104,13 @@ export const SeatReservationScreen: React.FC = () => {
       Alert.alert("오류", "좌석을 선택해주세요.");
       return;
     }
+    if (isBeaconViewOnly) {
+      Alert.alert(
+        "비콘 인증 필요",
+        "현재는 좌석 현황만 조회할 수 있습니다. 열람실 안에서 비콘 인증 후 좌석을 예약해주세요."
+      );
+      return;
+    }
 
     Alert.alert(
       "좌석 예약",
@@ -164,7 +171,7 @@ export const SeatReservationScreen: React.FC = () => {
   };
 
   const isButtonDisabled = () => {
-    if (isBeaconChecking || isBeaconViewOnly) return true;
+    if (isBeaconChecking) return true;
     if (!selectedSeat) return true;
     if (reserveMutation.isPending) return true;
     return false;
@@ -238,8 +245,8 @@ export const SeatReservationScreen: React.FC = () => {
 
               <View style={styles.footer}>
                   <Button 
-                      variant={!isButtonDisabled() ? 'fill' : 'weak'}
-                      color={!isButtonDisabled() ? 'primary' : 'dark'}
+                      variant={!isButtonDisabled() && !isBeaconViewOnly ? 'fill' : 'weak'}
+                      color={isBeaconViewOnly ? 'danger' : (!isButtonDisabled() ? 'primary' : 'dark')}
                       size="xlarge"
                       onPress={handleReservation} 
                       disabled={isButtonDisabled()}
