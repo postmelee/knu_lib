@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, StyleSheet, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Alert, Linking, ScrollView } from 'react-native';
 import { useAutoBeaconAuth, useReserveSeat, useReadingRoomSeats } from '../hooks/queries/useSeat';
 import { useQueryClient } from '@tanstack/react-query';
 import { ParsedSeat } from '../api/types/seat';
@@ -29,6 +29,7 @@ export const SeatReservationScreen: React.FC = () => {
   const [selectedSeat, setSelectedSeat] = useState<ParsedSeat | null>(null);
   const [isBeaconPermissionReady, setIsBeaconPermissionReady] = useState(!isBeaconRequired);
   const [isPreparingBeaconPermission, setIsPreparingBeaconPermission] = useState(false);
+  const [beaconPermissionErrorMessage, setBeaconPermissionErrorMessage] = useState<string | null>(null);
   const hasShownBeaconFailureAlertRef = useRef(false);
 
   const reserveMutation = useReserveSeat();
@@ -36,43 +37,65 @@ export const SeatReservationScreen: React.FC = () => {
   
   const { data: seats, isLoading: isSeatsLoading } = useReadingRoomSeats(roomId);
   const isBeaconChecking = isBeaconRequired && (isPreparingBeaconPermission || autoBeacon.isFetching);
-  const isBeaconViewOnly = isBeaconRequired && autoBeacon.isError && !isBeaconChecking;
+  const isBeaconPermissionBlocked = isBeaconRequired && !!beaconPermissionErrorMessage;
+  const isBeaconViewOnly = isBeaconRequired && !isBeaconChecking && (isBeaconPermissionBlocked || autoBeacon.isError);
+
+  const openAppSettings = useCallback(() => {
+    Linking.openSettings().catch(() => {
+      Alert.alert("설정 열기 실패", "기기 설정에서 앱의 위치 및 블루투스 권한을 직접 허용해주세요.");
+    });
+  }, []);
+
+  const showBeaconPermissionAlert = useCallback((message?: string) => {
+    Alert.alert(
+      "비콘 인증 권한 필요",
+      message || "비콘 인증이 위치 또는 블루투스 권한 문제로 실패했습니다. 기기 설정에서 권한을 허용한 뒤 다시 시도해주세요.",
+      [
+        { text: "확인", style: "cancel" },
+        { text: "설정 열기", onPress: openAppSettings },
+      ]
+    );
+  }, [openAppSettings]);
+
+  const isBeaconPermissionError = useCallback((message?: string) => {
+    if (!message) return false;
+    const lowerMessage = message.toLowerCase();
+    return (
+      message.includes("권한") ||
+      message.includes("위치 서비스") ||
+      lowerMessage.includes("permission") ||
+      lowerMessage.includes("denied")
+    );
+  }, []);
 
   const prepareBeaconPermission = useCallback(async () => {
     if (!isBeaconRequired) {
+      setBeaconPermissionErrorMessage(null);
       setIsBeaconPermissionReady(true);
       return;
     }
 
+    setBeaconPermissionErrorMessage(null);
     setIsBeaconPermissionReady(false);
     setIsPreparingBeaconPermission(true);
     try {
       const permitted = await prepareBeaconScanPermissions();
       if (!permitted) {
-        Alert.alert(
-          "권한 필요",
-          "도서관 위치 인증을 위해 블루투스 및 위치 권한이 필요합니다.",
-          [
-            { text: "다시 시도", onPress: prepareBeaconPermission },
-            { text: "뒤로 가기", style: "cancel", onPress: () => router.back() },
-          ]
-        );
+        const message = "비콘 인증이 위치 또는 블루투스 권한 문제로 실패했습니다. 기기 설정에서 앱 권한을 허용한 뒤 다시 시도해주세요.";
+        setBeaconPermissionErrorMessage(message);
+        showBeaconPermissionAlert(message);
         return;
       }
+      setBeaconPermissionErrorMessage(null);
       setIsBeaconPermissionReady(true);
     } catch (error: any) {
-      Alert.alert(
-        "권한 확인 실패",
-        error?.message || "블루투스 및 위치 권한을 확인하지 못했습니다.",
-        [
-          { text: "다시 시도", onPress: prepareBeaconPermission },
-          { text: "뒤로 가기", style: "cancel", onPress: () => router.back() },
-        ]
-      );
+      const message = error?.message || "비콘 인증 권한을 확인하지 못했습니다. 기기 설정에서 위치 및 블루투스 권한을 확인해주세요.";
+      setBeaconPermissionErrorMessage(message);
+      showBeaconPermissionAlert(message);
     } finally {
       setIsPreparingBeaconPermission(false);
     }
-  }, [isBeaconRequired, router]);
+  }, [isBeaconRequired, showBeaconPermissionAlert]);
 
   useEffect(() => {
     prepareBeaconPermission();
@@ -87,9 +110,15 @@ export const SeatReservationScreen: React.FC = () => {
       !hasShownBeaconFailureAlertRef.current
     ) {
       hasShownBeaconFailureAlertRef.current = true;
+      const message = autoBeacon.error?.message || "위치 인증에 실패했습니다. 열람실 안에서 다시 시도해주세요.";
+      if (isBeaconPermissionError(message)) {
+        setBeaconPermissionErrorMessage(message);
+        showBeaconPermissionAlert(message);
+        return;
+      }
       Alert.alert(
         "도서관 밖이신가요?", 
-        autoBeacon.error?.message || "위치 인증에 실패했습니다. 열람실 안에서 다시 시도해주세요.",
+        message,
         [{ text: "확인" }]
       );
     }
@@ -99,6 +128,8 @@ export const SeatReservationScreen: React.FC = () => {
     autoBeacon.isFetchedAfterMount,
     autoBeacon.isFetching,
     autoBeacon.error,
+    isBeaconPermissionError,
+    showBeaconPermissionAlert,
   ]);
 
   const handleSeatPress = useCallback((seat: ParsedSeat) => {
@@ -116,6 +147,10 @@ export const SeatReservationScreen: React.FC = () => {
   const handleReservation = () => {
     if (!selectedSeat) {
       Alert.alert("오류", "좌석을 선택해주세요.");
+      return;
+    }
+    if (beaconPermissionErrorMessage) {
+      showBeaconPermissionAlert(beaconPermissionErrorMessage);
       return;
     }
     if (isBeaconViewOnly) {
@@ -174,6 +209,9 @@ export const SeatReservationScreen: React.FC = () => {
     }
     if (isBeaconRequired && autoBeacon.isFetching) {
       return '도서관 위치 확인 중...';
+    }
+    if (isBeaconPermissionBlocked) {
+      return '권한 허용 후 예약 가능';
     }
     if (isBeaconViewOnly) {
       return '비콘 인증 후 예약 가능';

@@ -5,9 +5,10 @@ import CoreLocation
 class BeaconDelegate: NSObject, CLLocationManagerDelegate {
     var onBeaconFound: (([String: Any]) -> Void)?
     var onError: ((String, String) -> Void)?
+    var onAuthorizationChange: ((CLAuthorizationStatus) -> Void)?
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        // Handle authorization changes if needed
+        onAuthorizationChange?(status)
     }
     
     func locationManager(_ manager: CLLocationManager, didRange beacons: [CLBeacon], satisfying constraint: CLBeaconIdentityConstraint) {
@@ -45,6 +46,8 @@ public class BeaconRangingModule: Module {
     private let beaconDelegate = BeaconDelegate()
     private var beaconConstraint: CLBeaconIdentityConstraint?
     private var pendingPromise: Promise?
+    private var pendingAuthorizationUuid: UUID?
+    private var pendingAuthorizationTimeoutMs: Int?
     private var timeoutTimer: Timer?
     
     public func definition() -> ModuleDefinition {
@@ -74,11 +77,8 @@ public class BeaconRangingModule: Module {
         
         self.pendingPromise = promise
         
-        // Setup location manager delegate
         locationManager.delegate = beaconDelegate
-        locationManager.requestWhenInUseAuthorization()
         
-        // Let the delegate handle the callback
         beaconDelegate.onBeaconFound = { [weak self] result in
             self?.stopRanging()
             self?.pendingPromise?.resolve(result)
@@ -90,6 +90,51 @@ public class BeaconRangingModule: Module {
             self?.pendingPromise?.reject(code, message)
             self?.pendingPromise = nil
         }
+
+        beaconDelegate.onAuthorizationChange = { [weak self] status in
+            self?.handleAuthorizationChange(status)
+        }
+
+        guard CLLocationManager.locationServicesEnabled() else {
+            rejectPending("LOCATION_SERVICES_DISABLED", "기기 위치 서비스가 꺼져 있습니다. 설정에서 위치 서비스를 켠 뒤 다시 시도해주세요.")
+            return
+        }
+
+        let status = currentAuthorizationStatus()
+        if isAuthorized(status) {
+            startAuthorizedRanging(uuid: uuid, timeoutMs: timeoutMs)
+            return
+        }
+
+        if status == .notDetermined {
+            pendingAuthorizationUuid = uuid
+            pendingAuthorizationTimeoutMs = timeoutMs
+            locationManager.requestWhenInUseAuthorization()
+            return
+        }
+
+        rejectPending("LOCATION_PERMISSION_DENIED", "비콘 인증이 위치 권한 문제로 실패했습니다. 설정에서 위치 권한을 허용한 뒤 다시 시도해주세요.")
+    }
+
+    private func handleAuthorizationChange(_ status: CLAuthorizationStatus) {
+        if isAuthorized(status) {
+            guard let uuid = pendingAuthorizationUuid, let timeoutMs = pendingAuthorizationTimeoutMs else {
+                return
+            }
+            pendingAuthorizationUuid = nil
+            pendingAuthorizationTimeoutMs = nil
+            startAuthorizedRanging(uuid: uuid, timeoutMs: timeoutMs)
+            return
+        }
+
+        if status == .denied || status == .restricted {
+            rejectPending("LOCATION_PERMISSION_DENIED", "비콘 인증이 위치 권한 문제로 실패했습니다. 설정에서 위치 권한을 허용한 뒤 다시 시도해주세요.")
+        }
+    }
+
+    private func startAuthorizedRanging(uuid: UUID, timeoutMs: Int) {
+        pendingAuthorizationUuid = nil
+        pendingAuthorizationTimeoutMs = nil
         
         let constraint = CLBeaconIdentityConstraint(uuid: uuid)
         self.beaconConstraint = constraint
@@ -103,6 +148,17 @@ public class BeaconRangingModule: Module {
             }
         }
     }
+
+    private func currentAuthorizationStatus() -> CLAuthorizationStatus {
+        if #available(iOS 14.0, *) {
+            return locationManager.authorizationStatus
+        }
+        return CLLocationManager.authorizationStatus()
+    }
+
+    private func isAuthorized(_ status: CLAuthorizationStatus) -> Bool {
+        status == .authorizedWhenInUse || status == .authorizedAlways
+    }
     
     private func stopRanging() {
         if let constraint = beaconConstraint {
@@ -112,9 +168,12 @@ public class BeaconRangingModule: Module {
             self.timeoutTimer?.invalidate()
             self.timeoutTimer = nil
         }
+        pendingAuthorizationUuid = nil
+        pendingAuthorizationTimeoutMs = nil
         beaconConstraint = nil
         beaconDelegate.onBeaconFound = nil
         beaconDelegate.onError = nil
+        beaconDelegate.onAuthorizationChange = nil
     }
     
     private func handleTimeout() {
@@ -124,5 +183,11 @@ public class BeaconRangingModule: Module {
             pendingPromise = nil
         }
     }
-}
 
+    private func rejectPending(_ code: String, _ message: String) {
+        let promise = pendingPromise
+        stopRanging()
+        pendingPromise = nil
+        promise?.reject(code, message)
+    }
+}
