@@ -42,8 +42,10 @@ GitHub Issue: https://github.com/postmelee/knu_lib/issues/12
 |------|------|------|
 | `npx tsc --noEmit` | 통과 | 각 단계에서 실행. Stage 4는 분리 worktree의 로컬 `node_modules` 기준으로 실행 |
 | iOS Debug 빌드 | 통과 | `RCT_USE_PREBUILT_RNCORE=0 npx expo run:ios --device 00008110-000174CA260A801E --configuration Debug` 빌드 및 설치 성공 |
+| Android Debug 빌드/에뮬레이터 실행 | 통과 | `ANDROID_SERIAL=emulator-5554 npx expo run:android` 빌드 성공, APK 설치 후 Metro 번들 로드와 로그인 화면 확인 |
 | `git diff --check` | 통과 | 각 단계 및 최종 변경 점검 |
 | 코드 검색 회귀 확인 | 통과 | 비콘 실패 팝업 `확인`, 조회 전용 예약 guard, 버튼 문구, 재진입 팝업 조건, 권한 설정 안내, Android 권한 세부 메시지 확인 |
+| 작업지시자 수동 테스트 | 통과 | 좌석 조회 전용 흐름, 재진입 팝업 중복 방지, iOS/Android 권한 안내 동작 정상 확인 |
 
 ## 잔여 위험과 후속 작업
 
@@ -56,4 +58,4 @@ GitHub Issue: https://github.com/postmelee/knu_lib/issues/12
 
 ## 작업지시자 승인 요청
 
-Task #12 구현과 최종 보고를 완료했다. 검토 후 승인되면 `publish/task12` 브랜치로 push하고 `devel` 대상 draft PR을 생성할 수 있다.
+Task #12 구현, 검증, 작업지시자 수동 테스트 통과를 확인했다. 작업지시자 승인에 따라 `publish/task12` 브랜치로 push하고 `devel` 대상 draft PR을 생성한다.
