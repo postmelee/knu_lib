@@ -201,17 +201,6 @@ export const SeatReservationScreen: React.FC = () => {
                   )}
               </View>
 
-              {isBeaconViewOnly && (
-                <View style={styles.viewOnlyNotice}>
-                  <Text preset="t7Bold" color={textColors.red} style={styles.viewOnlyNoticeTitle}>
-                    조회 전용 모드
-                  </Text>
-                  <Text preset="t7Medium" color={textColors.secondary}>
-                    비콘을 찾지 못해 좌석 현황만 표시합니다. 예약은 열람실 안에서 비콘 인증 후 가능합니다.
-                  </Text>
-                </View>
-              )}
-              
               <View 
                 style={{ flex: 1 }} 
                 onLayout={onMapContainerLayout}
@@ -287,19 +276,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  viewOnlyNotice: {
-    marginHorizontal: 24,
-    marginBottom: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ffe1e4',
-    backgroundColor: '#fff6f7',
-  },
-  viewOnlyNoticeTitle: {
-    marginBottom: 2,
   },
   mapContainer: {
     flex: 1,
