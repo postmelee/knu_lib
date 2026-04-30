@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { useAutoBeaconAuth, useReserveSeat, useReadingRoomSeats } from '../hooks/queries/useSeat';
 import { useQueryClient } from '@tanstack/react-query';
@@ -29,13 +29,14 @@ export const SeatReservationScreen: React.FC = () => {
   const [selectedSeat, setSelectedSeat] = useState<ParsedSeat | null>(null);
   const [isBeaconPermissionReady, setIsBeaconPermissionReady] = useState(!isBeaconRequired);
   const [isPreparingBeaconPermission, setIsPreparingBeaconPermission] = useState(false);
+  const hasShownBeaconFailureAlertRef = useRef(false);
 
   const reserveMutation = useReserveSeat();
   const autoBeacon = useAutoBeaconAuth(isBeaconRequired && isBeaconPermissionReady);
   
   const { data: seats, isLoading: isSeatsLoading } = useReadingRoomSeats(roomId);
-  const isBeaconChecking = isBeaconRequired && (isPreparingBeaconPermission || autoBeacon.isLoading);
-  const isBeaconViewOnly = isBeaconRequired && autoBeacon.isError;
+  const isBeaconChecking = isBeaconRequired && (isPreparingBeaconPermission || autoBeacon.isFetching);
+  const isBeaconViewOnly = isBeaconRequired && autoBeacon.isError && !isBeaconChecking;
 
   const prepareBeaconPermission = useCallback(async () => {
     if (!isBeaconRequired) {
@@ -78,14 +79,27 @@ export const SeatReservationScreen: React.FC = () => {
   }, [prepareBeaconPermission]);
 
   useEffect(() => {
-    if (autoBeacon.isError) {
+    if (
+      isBeaconRequired &&
+      autoBeacon.isError &&
+      autoBeacon.isFetchedAfterMount &&
+      !autoBeacon.isFetching &&
+      !hasShownBeaconFailureAlertRef.current
+    ) {
+      hasShownBeaconFailureAlertRef.current = true;
       Alert.alert(
         "도서관 밖이신가요?", 
         autoBeacon.error?.message || "위치 인증에 실패했습니다. 열람실 안에서 다시 시도해주세요.",
         [{ text: "확인" }]
       );
     }
-  }, [autoBeacon.isError, autoBeacon.error]);
+  }, [
+    isBeaconRequired,
+    autoBeacon.isError,
+    autoBeacon.isFetchedAfterMount,
+    autoBeacon.isFetching,
+    autoBeacon.error,
+  ]);
 
   const handleSeatPress = useCallback((seat: ParsedSeat) => {
       if (isBeaconChecking) {
@@ -155,11 +169,11 @@ export const SeatReservationScreen: React.FC = () => {
   const isLoadingUI = reserveMutation.isPending || isSeatsLoading;
 
   const getButtonText = () => {
-    if (isBeaconRequired && autoBeacon.isLoading) {
-      return '도서관 위치 확인 중...';
-    }
     if (isBeaconRequired && isPreparingBeaconPermission) {
       return '권한 확인 중...';
+    }
+    if (isBeaconRequired && autoBeacon.isFetching) {
+      return '도서관 위치 확인 중...';
     }
     if (isBeaconViewOnly) {
       return '비콘 인증 후 예약 가능';

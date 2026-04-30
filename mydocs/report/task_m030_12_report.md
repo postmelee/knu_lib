@@ -4,19 +4,20 @@ GitHub Issue: https://github.com/postmelee/knu_lib/issues/12
 
 ## 작업 요약
 
-좌석 예약 화면에서 비콘 인증 실패가 발생해도 열람실 목록으로 강제 복귀하지 않고, 좌석 목록과 잔여 좌석을 계속 확인할 수 있게 했다. 예약은 기존 정책대로 비콘 인증이 필요한 작업으로 유지했고, 비콘 미인증 상태는 예약 버튼 문구와 예약 시도 안내로 표시했다.
+좌석 예약 화면에서 비콘 인증 실패가 발생해도 열람실 목록으로 강제 복귀하지 않고, 좌석 목록과 잔여 좌석을 계속 확인할 수 있게 했다. 예약은 기존 정책대로 비콘 인증이 필요한 작업으로 유지했고, 비콘 미인증 상태는 예약 버튼 문구와 예약 시도 안내로 표시했다. 재진입 시 이전 비콘 실패 캐시로 팝업이 즉시 재노출되지 않도록 하고, 새 인증 시도 실패 결과에 대해서만 최대 1회 안내한다.
 
 ## 변경 파일 목록과 영향 범위
 
 | 파일 | 영향 |
 |------|------|
-| `src/screens/SeatReservationScreen.tsx` | 비콘 실패 팝업 버튼 변경, 조회 전용 버튼 문구/예약 guard 추가, 상단 안내 영역 제거 |
+| `src/screens/SeatReservationScreen.tsx` | 비콘 실패 팝업 버튼 변경, 조회 전용 버튼 문구/예약 guard 추가, 상단 안내 영역 제거, 재진입 실패 팝업 중복 방지 |
 | `mydocs/plans/task_m030_12.md` | 수행계획서 |
 | `mydocs/plans/task_m030_12_impl.md` | 구현계획서 |
 | `mydocs/working/task_m030_12_stage1.md` | Stage 1 완료보고서 |
 | `mydocs/working/task_m030_12_stage2.md` | Stage 2 완료보고서 |
 | `mydocs/working/task_m030_12_stage3.md` | Stage 3 완료보고서 |
 | `mydocs/working/task_m030_12_stage4.md` | Stage 4 피드백 반영 완료보고서 |
+| `mydocs/working/task_m030_12_stage5.md` | Stage 5 재진입 팝업 중복 방지 완료보고서 |
 | `mydocs/orders/20260430.md` | 오늘할일 완료 처리 |
 
 ## 변경 전·후 비교
@@ -27,6 +28,7 @@ GitHub Issue: https://github.com/postmelee/knu_lib/issues/12
 | 좌석 조회 | 비콘 실패 후 화면 이탈로 좌석 현황 확인 불가 | 좌석맵과 좌석 선택 상태 확인 가능 |
 | 예약 버튼 | 비콘 실패 상태의 이유가 화면에서 충분히 드러나지 않음 | `비콘 인증 후 예약 가능` 버튼 문구 표시 |
 | 예약 액션 | 비콘 실패 상태에서 UI가 사실상 종료 흐름 | 조회 전용 상태에서 예약 시도 시 `비콘 인증 필요` 안내 후 서버 요청 차단 |
+| 화면 재진입 | 이전 비콘 실패 query 상태가 새 화면에서 즉시 팝업으로 재노출될 수 있음 | 이번 화면 진입 후 실제 인증 시도가 실패한 경우에만 최대 1회 팝업 표시 |
 
 ## 검증 결과
 
@@ -34,7 +36,7 @@ GitHub Issue: https://github.com/postmelee/knu_lib/issues/12
 |------|------|------|
 | `npx tsc --noEmit` | 통과 | 각 단계에서 실행. Stage 4는 분리 worktree의 로컬 `node_modules` 기준으로 실행 |
 | `git diff --check` | 통과 | 각 단계 및 최종 변경 점검 |
-| 코드 검색 회귀 확인 | 통과 | 비콘 실패 팝업 `확인`, 조회 전용 예약 guard, 버튼 문구 확인 |
+| 코드 검색 회귀 확인 | 통과 | 비콘 실패 팝업 `확인`, 조회 전용 예약 guard, 버튼 문구, 재진입 팝업 조건 확인 |
 
 ## 잔여 위험과 후속 작업
 
