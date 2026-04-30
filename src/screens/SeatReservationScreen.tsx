@@ -11,7 +11,7 @@ import { textColors } from '../styles/typography';
 import { SeatItem } from '../components/SeatItem';
 import { useSeatMapLayout } from '../hooks/useSeatMapLayout';
 import { getSeatAssignmentTimeRange } from '../utils/dateUtils';
-import { prepareBeaconScanPermissions } from '../services/beaconService';
+import { prepareBeaconScanPermissionResult } from '../services/beaconService';
 
 export const SeatReservationScreen: React.FC = () => {
   const router = useRouter();
@@ -79,9 +79,9 @@ export const SeatReservationScreen: React.FC = () => {
     setIsBeaconPermissionReady(false);
     setIsPreparingBeaconPermission(true);
     try {
-      const permitted = await prepareBeaconScanPermissions();
-      if (!permitted) {
-        const message = "비콘 인증이 위치 또는 블루투스 권한 문제로 실패했습니다. 기기 설정에서 앱 권한을 허용한 뒤 다시 시도해주세요.";
+      const permissionResult = await prepareBeaconScanPermissionResult();
+      if (!permissionResult.granted) {
+        const message = permissionResult.message || "비콘 인증이 위치 또는 블루투스 권한 문제로 실패했습니다. 기기 설정에서 앱 권한을 허용한 뒤 다시 시도해주세요.";
         setBeaconPermissionErrorMessage(message);
         showBeaconPermissionAlert(message);
         return;
